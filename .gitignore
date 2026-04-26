@@ -1,7 +1,10 @@
 /vendor/
 node_modules/
+dist/
+*.tsbuildinfo
 npm-debug.log
 yarn-error.log
+vite-dev*.log
 
 # Laravel 4 specific
 bootstrap/compiled.php
