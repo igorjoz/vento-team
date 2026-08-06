@@ -1525,6 +1525,8 @@ p {
 .lightbox-stage.is-dragging { cursor: grabbing; }
 
 .lightbox-stage img {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
@@ -1534,6 +1536,48 @@ p {
   user-select: none;
   will-change: transform;
   transition: transform 80ms linear;
+}
+
+.lightbox-preview {
+  z-index: 1;
+  filter: blur(8px) saturate(0.95);
+  transform-origin: center;
+}
+
+.lightbox-full {
+  z-index: 2;
+  opacity: 0;
+  transition: transform 80ms linear, opacity 260ms ease;
+}
+
+.lightbox-full.is-loaded {
+  opacity: 1;
+}
+
+.lightbox-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(5, 5, 6, 0.32), transparent 48%);
+}
+
+.lightbox-loading-spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  border-top-color: var(--yellow);
+  border-radius: 50%;
+  animation: lightboxSpin 0.8s linear infinite;
+  filter: drop-shadow(0 0 0.7rem rgba(252, 227, 0, 0.3));
+}
+
+@keyframes lightboxSpin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .lightbox-stage.is-dragging img {

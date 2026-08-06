@@ -76,32 +76,34 @@ const raceFolder = "/images/2026-04-25 mtb pomerania";
 const athleteGalleryFolder = "/images/riders-gallery";
 
 const athletePhotos: AthletePhoto[] = [
-  { file: "0B4A3732-Zuzia", people: ["Zuzia"], width: 4831, height: 3221 },
-  { file: "0B4A5025-Igor", people: ["Igor"], width: 3704, height: 5556 },
-  { file: "IMG-20250728-WA0005-Wiktor", people: ["Wiktor"], width: 1600, height: 1066 },
-  { file: "IMG-20250715-WA0008-Cezary", people: ["Cezary"], width: 1066, height: 1600 },
-  { file: "0B4A5551-Zuzia", people: ["Zuzia"], width: 3712, height: 5568 },
-  { file: "482320176_2077726072638578_8305219128402702829_n-Igor", people: ["Igor"], width: 2048, height: 1365 },
-  { file: "FB_IMG_1777789177698-Zuzia", people: ["Zuzia"], width: 2048, height: 1365 },
-  { file: "IMG-20250916-WA0002-Wiktor", people: ["Wiktor"], width: 1600, height: 1064 },
-  { file: "IMG-20260615-WA0001-Cezary", people: ["Cezary"], width: 1600, height: 1066 },
-  { file: "FB_IMG_1777789512486-Zuzia", people: ["Zuzia"], width: 1365, height: 2048 },
-  { file: "IMG-20250916-WA0015-Igor", people: ["Igor"], width: 1600, height: 1064 },
-  { file: "20250702_111820-Zuzia", people: ["Zuzia"], width: 4032, height: 2268 },
-  { file: "IMG-20260615-WA0000-Wiktor", people: ["Wiktor"], width: 1600, height: 1066 },
-  { file: "IMG-20250715-WA0009-Zuzia", people: ["Zuzia"], width: 1600, height: 1066 },
-  { file: "IMG-20250916-WA0020-Igor", people: ["Igor"], width: 1600, height: 1066 },
-  { file: "IMG-20250715-WA00101-Zuzia", people: ["Zuzia"], width: 1066, height: 1600 },
-  { file: "IMG-20250916-WA0031-Wiktor-i-Cezary", people: ["Wiktor", "Cezary"], width: 1600, height: 1064 },
-  { file: "IMG-20250916-WA0022-Igor", people: ["Igor"], width: 1600, height: 1066 },
-  { file: "FB_IMG_1749460522650-Zuzia", people: ["Zuzia"], width: 1920, height: 1280 },
-  { file: "IMG-20250916-WA0025-Igor", people: ["Igor"], width: 1600, height: 1064 },
-  { file: "IMG-20250715-WA00052-Zuzia", people: ["Zuzia"], width: 1066, height: 1600 },
-  { file: "IMG-20250916-WA0036-Igor", people: ["Igor"], width: 1600, height: 1066 },
-  { file: "FB_IMG_1744660511326-Zuzia", people: ["Zuzia"], width: 1080, height: 719 },
-  { file: "IMG-20250916-WA0040-Igor", people: ["Igor"], width: 1600, height: 1066 },
-  { file: "IMG-20250916-WA0005-Zuzia", people: ["Zuzia"], width: 1600, height: 1064 },
-].map(({ file, people, width, height }) => ({
+  { file: "1-Igor", width: 1600, height: 1066 },
+  { file: "2-Zuzia", width: 2048, height: 1365 },
+  { file: "3-Wiktor", width: 1600, height: 1066 },
+  { file: "4-Cezary", width: 1600, height: 1066 },
+  { file: "5-Igor", width: 1600, height: 1064 },
+  { file: "6-Igor", width: 1600, height: 1066 },
+  { file: "7-Zuzia", width: 4831, height: 3221 },
+  { file: "8-Zuzia", width: 3712, height: 5568 },
+  { file: "9-Igor", width: 3704, height: 5556 },
+  { file: "10-Wiktor", width: 1600, height: 1066 },
+  { file: "11-Wiktor-i-Cezary", width: 1600, height: 1064 },
+  { file: "12-Cezary", width: 1066, height: 1600 },
+  { file: "13-Wiktor", width: 1600, height: 1064 },
+  { file: "14-Zuzia", width: 1600, height: 1064 },
+  { file: "15-Igor", width: 2048, height: 1365 },
+  { file: "16-Zuzia", width: 1066, height: 1600 },
+  { file: "17-Zuzia", width: 1066, height: 1600 },
+  { file: "18-Zuzia", width: 1600, height: 1066 },
+  { file: "19-Zuzia", width: 1920, height: 1280 },
+  { file: "20-Igor", width: 1600, height: 1066 },
+  { file: "21-Zuzia", width: 1365, height: 2048 },
+  { file: "22-Igor", width: 1600, height: 1064 },
+  { file: "23-Zuzia", width: 4032, height: 2268 },
+  { file: "24-Igor", width: 1600, height: 1066 },
+  { file: "25-Zuzia", width: 1080, height: 720 },
+].map(({ file, width, height }) => {
+  const people = file.replace(/^\d+-/, "").split("-i-");
+  return {
   src: `${athleteGalleryFolder}/full/${file}.webp`,
   previewSrc: `${athleteGalleryFolder}/thumb/${file}.webp`,
   alt: `${people.join(" i ")} podczas zawodów MTB`,
@@ -109,7 +111,8 @@ const athletePhotos: AthletePhoto[] = [
   people,
   width,
   height,
-}));
+  };
+});
 
 const teamMembers: TeamMember[] = [
   {
@@ -247,6 +250,7 @@ export function App() {
   const [lightboxZoom, setLightboxZoom] = useState(1);
   const [lightboxPan, setLightboxPan] = useState({ x: 0, y: 0 });
   const [isDraggingLightbox, setIsDraggingLightbox] = useState(false);
+  const [loadedLightboxSrc, setLoadedLightboxSrc] = useState<string | null>(null);
 
   const activeRace = useMemo(
     () => raceGalleries.find((race) => race.id === selectedRaceId) ?? raceGalleries[0],
@@ -258,6 +262,10 @@ export function App() {
   );
   const activeLightboxImages = lightboxCollection === "athletes" ? athletePhotos : visibleGalleryImages;
   const activeGalleryImage = lightboxIndex === null ? null : activeLightboxImages[lightboxIndex];
+  const isLightboxImageLoaded = activeGalleryImage ? loadedLightboxSrc === activeGalleryImage.src : false;
+  const hasDistinctLightboxPreview = Boolean(
+    activeGalleryImage?.previewSrc && activeGalleryImage.previewSrc !== activeGalleryImage.src,
+  );
 
   const resetLightboxView = () => {
     setLightboxZoom(1);
@@ -281,6 +289,7 @@ export function App() {
 
   const showGalleryImage = (direction: number) => {
     resetLightboxView();
+    setLoadedLightboxSrc(null);
     setLightboxIndex((currentIndex) => {
       if (currentIndex === null) return currentIndex;
       return (currentIndex + direction + activeLightboxImages.length) % activeLightboxImages.length;
@@ -485,6 +494,20 @@ export function App() {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [lightboxIndex, activeLightboxImages.length]);
+
+  useEffect(() => {
+    if (!activeGalleryImage) return;
+    const currentIndex = lightboxIndex ?? 0;
+    const preloadIndexes = [
+      (currentIndex + 1) % activeLightboxImages.length,
+      (currentIndex - 1 + activeLightboxImages.length) % activeLightboxImages.length,
+    ];
+
+    preloadIndexes.forEach((index) => {
+      const image = new Image();
+      image.src = activeLightboxImages[index].src;
+    });
+  }, [activeGalleryImage, lightboxIndex, activeLightboxImages]);
 
   useEffect(() => {
     const shell = shellRef.current;
@@ -916,13 +939,31 @@ export function App() {
               onPointerCancel={stopLightboxDrag}
               onDoubleClick={() => (lightboxZoom > 1 ? resetLightboxView() : zoomLightbox(1))}
             >
+              {hasDistinctLightboxPreview ? (
+                <img
+                  className="lightbox-preview"
+                  src={activeGalleryImage.previewSrc}
+                  alt=""
+                  aria-hidden="true"
+                  draggable="false"
+                  style={{ transform: `translate3d(${lightboxPan.x}px, ${lightboxPan.y}px, 0) scale(${lightboxZoom})` }}
+                />
+              ) : null}
               <img
+                className={`lightbox-full${isLightboxImageLoaded ? " is-loaded" : ""}`}
+                key={activeGalleryImage.src}
                 ref={lightboxImageRef}
                 src={activeGalleryImage.src}
                 alt={activeGalleryImage.alt}
                 draggable="false"
+                onLoad={() => setLoadedLightboxSrc(activeGalleryImage.src)}
                 style={{ transform: `translate3d(${lightboxPan.x}px, ${lightboxPan.y}px, 0) scale(${lightboxZoom})` }}
               />
+              {!isLightboxImageLoaded ? (
+                <div className="lightbox-loading" role="status" aria-live="polite" aria-label="Ładowanie zdjęcia">
+                  <span className="lightbox-loading-spinner" aria-hidden="true" />
+                </div>
+              ) : null}
             </div>
             <button className="lightbox-nav lightbox-nav-next" type="button" onClick={() => showGalleryImage(1)} aria-label="Następne zdjęcie"><ChevronRight size={32} /></button>
           </div>
