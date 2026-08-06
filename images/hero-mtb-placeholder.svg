@@ -1,0 +1,41 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1920" height="1080" fill="#050506"/>
+  <path d="M0 692C236 603 395 609 614 650C806 686 974 604 1165 533C1395 447 1625 426 1920 461V1080H0V692Z" fill="#12161D"/>
+  <path d="M0 802C272 718 492 758 707 790C974 830 1176 762 1355 693C1568 611 1748 618 1920 663V1080H0V802Z" fill="#090A0D"/>
+  <path d="M1030 370L1920 68V346L1126 516L1030 370Z" fill="url(#paint0_linear)" opacity=".58"/>
+  <path d="M1192 520L1920 404V614L1235 664L1192 520Z" fill="url(#paint1_linear)" opacity=".34"/>
+  <ellipse cx="1582" cy="595" rx="360" ry="118" fill="#F8F7F2" opacity=".055"/>
+  <circle cx="1550" cy="628" r="238" stroke="#F8F7F2" stroke-width="28" opacity=".18"/>
+  <circle cx="1550" cy="628" r="156" stroke="#F8F7F2" stroke-width="12" opacity=".1"/>
+  <path d="M1036 765C1224 694 1418 642 1709 604" stroke="#FF671F" stroke-width="14" stroke-linecap="round" opacity=".9"/>
+  <path d="M1013 812C1277 738 1479 701 1920 654" stroke="#E4002B" stroke-width="8" stroke-linecap="round" opacity=".72"/>
+  <path d="M0 904C309 802 587 841 880 866C1180 892 1489 811 1920 870V1080H0V904Z" fill="#050506"/>
+  <path d="M0 905L1920 794" stroke="#FCE300" stroke-width="7" opacity=".68"/>
+  <path d="M0 944L1920 839" stroke="#E4002B" stroke-width="6" opacity=".46"/>
+  <g opacity=".12">
+    <path d="M126 0L-80 1080" stroke="#F8F7F2"/>
+    <path d="M430 0L224 1080" stroke="#F8F7F2"/>
+    <path d="M734 0L528 1080" stroke="#F8F7F2"/>
+    <path d="M1038 0L832 1080" stroke="#F8F7F2"/>
+    <path d="M1342 0L1136 1080" stroke="#F8F7F2"/>
+    <path d="M1646 0L1440 1080" stroke="#F8F7F2"/>
+    <path d="M1950 0L1744 1080" stroke="#F8F7F2"/>
+  </g>
+  <g opacity=".2">
+    <path d="M1354 160L1312 382" stroke="#F8F7F2" stroke-width="2"/>
+    <path d="M1494 119L1446 443" stroke="#F8F7F2" stroke-width="2"/>
+    <path d="M1634 78L1580 504" stroke="#F8F7F2" stroke-width="2"/>
+    <path d="M1774 37L1714 565" stroke="#F8F7F2" stroke-width="2"/>
+  </g>
+  <defs>
+    <linearGradient id="paint0_linear" x1="1030" y1="292" x2="1920" y2="292" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E4002B"/>
+      <stop offset=".62" stop-color="#FF671F"/>
+      <stop offset="1" stop-color="#FCE300"/>
+    </linearGradient>
+    <linearGradient id="paint1_linear" x1="1192" y1="520" x2="1920" y2="520" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E4002B"/>
+      <stop offset="1" stop-color="#FF671F" stop-opacity=".12"/>
+    </linearGradient>
+  </defs>
+</svg>
