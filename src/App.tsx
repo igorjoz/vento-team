@@ -39,11 +39,22 @@ type TeamMember = {
 
 type GalleryImage = {
   src: string;
+  previewSrc?: string;
   alt: string;
-  label: string;
+  label?: string;
   featured?: boolean;
   hidden?: boolean;
 };
+
+type AthletePhoto = GalleryImage & {
+  previewSrc: string;
+  label: string;
+  people: string[];
+  width: number;
+  height: number;
+};
+
+type LightboxCollection = "race" | "athletes";
 
 type RaceGallery = {
   id: string;
@@ -62,6 +73,43 @@ type Sponsor = {
 };
 
 const raceFolder = "/images/2026-04-25 mtb pomerania";
+const athleteGalleryFolder = "/images/riders-gallery";
+
+const athletePhotos: AthletePhoto[] = [
+  { file: "0B4A3732-Zuzia", people: ["Zuzia"], width: 4831, height: 3221 },
+  { file: "0B4A5025-Igor", people: ["Igor"], width: 3704, height: 5556 },
+  { file: "IMG-20250728-WA0005-Wiktor", people: ["Wiktor"], width: 1600, height: 1066 },
+  { file: "IMG-20250715-WA0008-Cezary", people: ["Cezary"], width: 1066, height: 1600 },
+  { file: "0B4A5551-Zuzia", people: ["Zuzia"], width: 3712, height: 5568 },
+  { file: "482320176_2077726072638578_8305219128402702829_n-Igor", people: ["Igor"], width: 2048, height: 1365 },
+  { file: "FB_IMG_1777789177698-Zuzia", people: ["Zuzia"], width: 2048, height: 1365 },
+  { file: "IMG-20250916-WA0002-Wiktor", people: ["Wiktor"], width: 1600, height: 1064 },
+  { file: "IMG-20260615-WA0001-Cezary", people: ["Cezary"], width: 1600, height: 1066 },
+  { file: "FB_IMG_1777789512486-Zuzia", people: ["Zuzia"], width: 1365, height: 2048 },
+  { file: "IMG-20250916-WA0015-Igor", people: ["Igor"], width: 1600, height: 1064 },
+  { file: "20250702_111820-Zuzia", people: ["Zuzia"], width: 4032, height: 2268 },
+  { file: "IMG-20260615-WA0000-Wiktor", people: ["Wiktor"], width: 1600, height: 1066 },
+  { file: "IMG-20250715-WA0009-Zuzia", people: ["Zuzia"], width: 1600, height: 1066 },
+  { file: "IMG-20250916-WA0020-Igor", people: ["Igor"], width: 1600, height: 1066 },
+  { file: "IMG-20250715-WA00101-Zuzia", people: ["Zuzia"], width: 1066, height: 1600 },
+  { file: "IMG-20250916-WA0031-Wiktor-i-Cezary", people: ["Wiktor", "Cezary"], width: 1600, height: 1064 },
+  { file: "IMG-20250916-WA0022-Igor", people: ["Igor"], width: 1600, height: 1066 },
+  { file: "FB_IMG_1749460522650-Zuzia", people: ["Zuzia"], width: 1920, height: 1280 },
+  { file: "IMG-20250916-WA0025-Igor", people: ["Igor"], width: 1600, height: 1064 },
+  { file: "IMG-20250715-WA00052-Zuzia", people: ["Zuzia"], width: 1066, height: 1600 },
+  { file: "IMG-20250916-WA0036-Igor", people: ["Igor"], width: 1600, height: 1066 },
+  { file: "FB_IMG_1744660511326-Zuzia", people: ["Zuzia"], width: 1080, height: 719 },
+  { file: "IMG-20250916-WA0040-Igor", people: ["Igor"], width: 1600, height: 1066 },
+  { file: "IMG-20250916-WA0005-Zuzia", people: ["Zuzia"], width: 1600, height: 1064 },
+].map(({ file, people, width, height }) => ({
+  src: `${athleteGalleryFolder}/full/${file}.webp`,
+  previewSrc: `${athleteGalleryFolder}/thumb/${file}.webp`,
+  alt: `${people.join(" i ")} podczas zawodów MTB`,
+  label: people.join(" · "),
+  people,
+  width,
+  height,
+}));
 
 const teamMembers: TeamMember[] = [
   {
@@ -194,6 +242,7 @@ export function App() {
   const [isHeaderHidden, setIsHeaderHidden] = useState(false);
   const [activeSection, setActiveSection] = useState("top");
   const [selectedRaceId, setSelectedRaceId] = useState(raceGalleries[0].id);
+  const [lightboxCollection, setLightboxCollection] = useState<LightboxCollection | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [lightboxZoom, setLightboxZoom] = useState(1);
   const [lightboxPan, setLightboxPan] = useState({ x: 0, y: 0 });
@@ -207,7 +256,8 @@ export function App() {
     () => activeRace.images.filter((image) => !image.hidden),
     [activeRace],
   );
-  const activeGalleryImage = lightboxIndex === null ? null : visibleGalleryImages[lightboxIndex];
+  const activeLightboxImages = lightboxCollection === "athletes" ? athletePhotos : visibleGalleryImages;
+  const activeGalleryImage = lightboxIndex === null ? null : activeLightboxImages[lightboxIndex];
 
   const resetLightboxView = () => {
     setLightboxZoom(1);
@@ -215,14 +265,16 @@ export function App() {
     setIsDraggingLightbox(false);
   };
 
-  const openGalleryImage = (index: number, trigger: HTMLElement) => {
+  const openGalleryImage = (collection: LightboxCollection, index: number, trigger: HTMLElement) => {
     lightboxReturnFocus.current = trigger;
     resetLightboxView();
+    setLightboxCollection(collection);
     setLightboxIndex(index);
   };
 
   const closeGalleryImage = () => {
     setLightboxIndex(null);
+    setLightboxCollection(null);
     resetLightboxView();
     window.requestAnimationFrame(() => lightboxReturnFocus.current?.focus());
   };
@@ -231,12 +283,13 @@ export function App() {
     resetLightboxView();
     setLightboxIndex((currentIndex) => {
       if (currentIndex === null) return currentIndex;
-      return (currentIndex + direction + visibleGalleryImages.length) % visibleGalleryImages.length;
+      return (currentIndex + direction + activeLightboxImages.length) % activeLightboxImages.length;
     });
   };
 
   const selectRace = (raceId: string) => {
     setLightboxIndex(null);
+    setLightboxCollection(null);
     resetLightboxView();
     setSelectedRaceId(raceId);
   };
@@ -264,22 +317,27 @@ export function App() {
     window.requestAnimationFrame(() => tabs?.[nextIndex]?.focus());
   };
 
+  const constrainPan = (x: number, y: number, zoom = lightboxZoom) => {
+    const stage = lightboxStageRef.current;
+    const image = lightboxImageRef.current;
+    if (!stage || !image || zoom <= 1 || !image.naturalWidth || !image.naturalHeight) return { x: 0, y: 0 };
+
+    const viewportWidth = image.clientWidth;
+    const viewportHeight = image.clientHeight;
+    const fitScale = Math.min(viewportWidth / image.naturalWidth, viewportHeight / image.naturalHeight);
+    const renderedWidth = image.naturalWidth * fitScale;
+    const renderedHeight = image.naturalHeight * fitScale;
+    const maxX = Math.max(0, (renderedWidth * zoom - viewportWidth) / 2);
+    const maxY = Math.max(0, (renderedHeight * zoom - viewportHeight) / 2);
+    return { x: clamp(x, -maxX, maxX), y: clamp(y, -maxY, maxY) };
+  };
+
   const zoomLightbox = (amount: number) => {
     setLightboxZoom((currentZoom) => {
       const nextZoom = clamp(Number((currentZoom + amount).toFixed(2)), 1, 3);
-      if (nextZoom === 1) setLightboxPan({ x: 0, y: 0 });
+      setLightboxPan((currentPan) => constrainPan(currentPan.x, currentPan.y, nextZoom));
       return nextZoom;
     });
-  };
-
-  const constrainPan = (x: number, y: number) => {
-    const stage = lightboxStageRef.current;
-    const image = lightboxImageRef.current;
-    if (!stage || !image || lightboxZoom <= 1) return { x: 0, y: 0 };
-
-    const maxX = Math.max(0, (image.clientWidth * lightboxZoom - stage.clientWidth) / 2);
-    const maxY = Math.max(0, (image.clientHeight * lightboxZoom - stage.clientHeight) / 2);
-    return { x: clamp(x, -maxX, maxX), y: clamp(y, -maxY, maxY) };
   };
 
   const handleLightboxWheel = (event: WheelEvent<HTMLDivElement>) => {
@@ -426,7 +484,7 @@ export function App() {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [lightboxIndex, visibleGalleryImages.length]);
+  }, [lightboxIndex, activeLightboxImages.length]);
 
   useEffect(() => {
     const shell = shellRef.current;
@@ -662,6 +720,36 @@ export function App() {
               </article>
             ))}
           </div>
+
+          <div className="athlete-gallery-heading page-grid" data-reveal>
+            <p className="eyebrow">Zawodnicy na trasie</p>
+            <h3>Ekipa w akcji</h3>
+            <p>Starty, treningi i emocje zapisane w kadrach.</p>
+          </div>
+
+          <div className="athlete-mosaic page-grid" data-reveal aria-label="Zdjęcia zawodników Vento Team">
+            {athletePhotos.map((photo, index) => (
+              <button
+                className="athlete-photo"
+                type="button"
+                onClick={(event) => openGalleryImage("athletes", index, event.currentTarget)}
+                aria-label={`Otwórz zdjęcie: ${photo.label}`}
+                key={photo.src}
+              >
+                <img
+                  src={photo.previewSrc}
+                  alt={photo.alt}
+                  width={photo.width}
+                  height={photo.height}
+                  loading="lazy"
+                  decoding="async"
+                />
+                <span className="athlete-photo-shade" aria-hidden="true" />
+                <span className="athlete-photo-label">{photo.label}</span>
+                <span className="athlete-photo-open" aria-hidden="true"><Plus size={16} /></span>
+              </button>
+            ))}
+          </div>
         </section>
 
         <section className="section gallery-section" id="galeria" aria-labelledby="gallery-title">
@@ -715,13 +803,13 @@ export function App() {
                 type="button"
                 className={`gallery-item${image.featured ? " gallery-item-featured" : ""}`}
                 key={image.src}
-                onClick={(event) => openGalleryImage(index, event.currentTarget)}
-                aria-label={`Otwórz zdjęcie: ${image.label}`}
+                onClick={(event) => openGalleryImage("race", index, event.currentTarget)}
+                aria-label={image.label ? `Otwórz zdjęcie: ${image.label}` : `Otwórz zdjęcie ${index + 1}`}
               >
                 <span className="gallery-media parallax-media">
-                  <img src={image.src} alt={image.alt} loading="lazy" decoding="async" />
+                  <img src={image.previewSrc ?? image.src} alt={image.alt} loading="lazy" decoding="async" />
                 </span>
-                <span className="gallery-caption"><span>0{index + 1}</span>{image.label}</span>
+                {image.label ? <span className="gallery-caption">{image.label}</span> : null}
                 <span className="gallery-open" aria-hidden="true"><Plus size={18} /></span>
               </button>
             ))}
@@ -807,7 +895,7 @@ export function App() {
           <button className="lightbox-backdrop" type="button" onClick={closeGalleryImage} aria-label="Zamknij podgląd" />
           <div className="lightbox-content" ref={lightboxContentRef}>
             <div className="lightbox-toolbar">
-              <span><small>0{(lightboxIndex ?? 0) + 1} / 0{visibleGalleryImages.length}</small>{activeGalleryImage.label}</span>
+              <span><small>{String((lightboxIndex ?? 0) + 1).padStart(2, "0")} / {String(activeLightboxImages.length).padStart(2, "0")}</small>{activeGalleryImage.label ?? activeRace.name}</span>
               <div className="lightbox-actions">
                 <button type="button" onClick={() => zoomLightbox(-0.25)} disabled={lightboxZoom <= 1} aria-label="Pomniejsz zdjęcie"><Minus size={18} /></button>
                 <span aria-live="polite">{Math.round(lightboxZoom * 100)}%</span>
