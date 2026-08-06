@@ -1,25 +1,35 @@
-import { useEffect, useRef, useState, type PointerEvent, type WheelEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent,
+  type WheelEvent,
+} from "react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   ArrowDown,
+  ArrowUpRight,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
-  Flame,
   Mail,
   MapPin,
+  Menu,
   Minus,
-  Mountain,
   Plus,
   RotateCcw,
-  ShieldCheck,
   X,
 } from "lucide-react";
 import { FaFacebookF, FaInstagram, FaStrava, FaYoutube } from "react-icons/fa";
 
+gsap.registerPlugin(ScrollTrigger);
+
 type TeamMember = {
   name: string;
   city: string;
-  stat: string;
   accent: string;
   photo: string;
   photoAlt: string;
@@ -35,11 +45,17 @@ type GalleryImage = {
   hidden?: boolean;
 };
 
+type RaceGallery = {
+  id: string;
+  name: string;
+  date: string;
+  images: GalleryImage[];
+};
+
 type Sponsor = {
   name: string;
   label: string;
   logo: string;
-  logoColor?: string;
   href?: string;
   description: string;
   emphasis: "founder" | "main";
@@ -51,7 +67,6 @@ const teamMembers: TeamMember[] = [
   {
     name: "Igor",
     city: "Kwidzyn",
-    stat: "Mocne tempo na technicznych odcinkach",
     accent: "Start",
     photo: `${raceFolder}/Z6G_1098-Igor-1.jpg`,
     photoAlt: "Igor podczas wyścigu MTB Pomerania",
@@ -61,7 +76,6 @@ const teamMembers: TeamMember[] = [
   {
     name: "Wiktor",
     city: "Kwidzyn",
-    stat: "Równy rytm od startu do mety",
     accent: "Stal",
     photo: `${raceFolder}/Z6G_1305-Wiktor.jpg`,
     photoAlt: "Wiktor na trasie wyścigu MTB Pomerania",
@@ -71,7 +85,6 @@ const teamMembers: TeamMember[] = [
   {
     name: "Cezary",
     city: "Susz",
-    stat: "Pewne prowadzenie w ciasnych sekcjach",
     accent: "Tempo",
     photo: `${raceFolder}/Z6G_1323-Cezary.jpg`,
     photoAlt: "Cezary w trakcie wyścigu MTB Pomerania",
@@ -81,7 +94,6 @@ const teamMembers: TeamMember[] = [
   {
     name: "Zuzia",
     city: "Józefów",
-    stat: "Szybka reakcja i mocny finisz",
     accent: "Kontrola",
     photo: `${raceFolder}/Z6G_1332-Zuzia-1.jpg`,
     photoAlt: "Zuzia na trasie wyścigu MTB Pomerania",
@@ -90,38 +102,45 @@ const teamMembers: TeamMember[] = [
   },
 ];
 
-const galleryImages: GalleryImage[] = [
+const raceGalleries: RaceGallery[] = [
   {
-    src: `${raceFolder}/mtb pomerania/wspolne-zdjecie-teamowe.jpg`,
-    alt: "Wspólne zdjęcie Vento Team po wyścigu",
-    label: "Team",
-    featured: true,
-  },
-  {
-    src: `${raceFolder}/Z6G_0818-Igor.jpg`,
-    alt: "Igor podczas przejazdu na trasie",
-    label: "Igor",
-  },
-  {
-    src: `${raceFolder}/Z6G_0928-Wiktor.jpg`,
-    alt: "Wiktor w akcji na trasie MTB",
-    label: "Wiktor",
-  },
-  {
-    src: `${raceFolder}/Z6G_0931-Cezary-2.jpg`,
-    alt: "Cezary pokonuje odcinek wyścigu",
-    label: "Cezary",
-  },
-  {
-    src: `${raceFolder}/Z6G_0932-Zuzia.jpg`,
-    alt: "Zuzia na trasie wyścigu",
-    label: "Zuzia",
-  },
-  {
-    src: `${raceFolder}/mtb pomerania/wiktor-1.jpg`,
-    alt: "Ujęcie z wyścigu MTB Pomerania",
-    label: "Trasa",
-    hidden: true,
+    id: "mtb-pomerania-2026-04-25",
+    name: "MTB Pomerania",
+    date: "25.04.2026",
+    images: [
+      {
+        src: `${raceFolder}/mtb pomerania/wspolne-zdjecie-teamowe.jpg`,
+        alt: "Wspólne zdjęcie Vento Team po wyścigu",
+        label: "Team",
+        featured: true,
+      },
+      {
+        src: `${raceFolder}/Z6G_0818-Igor.jpg`,
+        alt: "Igor podczas przejazdu na trasie",
+        label: "Igor",
+      },
+      {
+        src: `${raceFolder}/Z6G_0928-Wiktor.jpg`,
+        alt: "Wiktor w akcji na trasie MTB",
+        label: "Wiktor",
+      },
+      {
+        src: `${raceFolder}/Z6G_0931-Cezary-2.jpg`,
+        alt: "Cezary pokonuje odcinek wyścigu",
+        label: "Cezary",
+      },
+      {
+        src: `${raceFolder}/Z6G_0932-Zuzia.jpg`,
+        alt: "Zuzia na trasie wyścigu",
+        label: "Zuzia",
+      },
+      {
+        src: `${raceFolder}/mtb pomerania/wiktor-1.jpg`,
+        alt: "Ujęcie z wyścigu MTB Pomerania",
+        label: "Trasa",
+        hidden: true,
+      },
+    ],
   },
 ];
 
@@ -130,7 +149,6 @@ const sponsors: Sponsor[] = [
     name: "Vento Kominki",
     label: "Kominki i ogrzewanie od 1998",
     logo: "/images/vento-logo-dark.svg",
-    logoColor: "/images/vento-logo.svg",
     href: "https://www.e-kominki.com/",
     description: "Kwidzyn / ogień / ciepło domu",
     emphasis: "founder",
@@ -139,7 +157,6 @@ const sponsors: Sponsor[] = [
     name: "Stahl System",
     label: "Systemy spalinowe i stal",
     logo: "/images/Stahl-System-Logo-light.svg",
-    logoColor: "/images/Stahl-System-Logo-dark.svg",
     href: "https://stahlsystem.pl/",
     description: "Odporność / szczelność / precyzja",
     emphasis: "main",
@@ -152,13 +169,44 @@ const socials = [
   { label: "YouTube", icon: FaYoutube, href: "https://www.youtube.com/@vento-kominki" },
 ];
 
+const navItems = [
+  { id: "sklad", label: "Skład" },
+  { id: "galeria", label: "Galeria" },
+  { id: "partnerzy", label: "Partnerzy" },
+  { id: "kontakt", label: "Kontakt" },
+];
+
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
 export function App() {
+  const shellRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const lightboxContentRef = useRef<HTMLDivElement>(null);
+  const lightboxStageRef = useRef<HTMLDivElement>(null);
+  const lightboxImageRef = useRef<HTMLImageElement>(null);
+  const lightboxCloseRef = useRef<HTMLButtonElement>(null);
+  const lightboxReturnFocus = useRef<HTMLElement | null>(null);
+  const lastScrollY = useRef(0);
+  const dragStart = useRef({ pointerX: 0, pointerY: 0, panX: 0, panY: 0 });
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isHeaderHidden, setIsHeaderHidden] = useState(false);
+  const [activeSection, setActiveSection] = useState("top");
+  const [selectedRaceId, setSelectedRaceId] = useState(raceGalleries[0].id);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [lightboxZoom, setLightboxZoom] = useState(1);
   const [lightboxPan, setLightboxPan] = useState({ x: 0, y: 0 });
   const [isDraggingLightbox, setIsDraggingLightbox] = useState(false);
-  const dragStart = useRef({ pointerX: 0, pointerY: 0, panX: 0, panY: 0 });
-  const visibleGalleryImages = galleryImages.filter((image) => !image.hidden);
+
+  const activeRace = useMemo(
+    () => raceGalleries.find((race) => race.id === selectedRaceId) ?? raceGalleries[0],
+    [selectedRaceId],
+  );
+  const visibleGalleryImages = useMemo(
+    () => activeRace.images.filter((image) => !image.hidden),
+    [activeRace],
+  );
   const activeGalleryImage = lightboxIndex === null ? null : visibleGalleryImages[lightboxIndex];
 
   const resetLightboxView = () => {
@@ -167,7 +215,8 @@ export function App() {
     setIsDraggingLightbox(false);
   };
 
-  const openGalleryImage = (index: number) => {
+  const openGalleryImage = (index: number, trigger: HTMLElement) => {
+    lightboxReturnFocus.current = trigger;
     resetLightboxView();
     setLightboxIndex(index);
   };
@@ -175,29 +224,62 @@ export function App() {
   const closeGalleryImage = () => {
     setLightboxIndex(null);
     resetLightboxView();
+    window.requestAnimationFrame(() => lightboxReturnFocus.current?.focus());
   };
 
   const showGalleryImage = (direction: number) => {
     resetLightboxView();
     setLightboxIndex((currentIndex) => {
-      if (currentIndex === null) {
-        return currentIndex;
-      }
-
+      if (currentIndex === null) return currentIndex;
       return (currentIndex + direction + visibleGalleryImages.length) % visibleGalleryImages.length;
     });
   };
 
+  const selectRace = (raceId: string) => {
+    setLightboxIndex(null);
+    resetLightboxView();
+    setSelectedRaceId(raceId);
+  };
+
+  const handleRaceTabKeyDown = (
+    event: ReactKeyboardEvent<HTMLButtonElement>,
+    currentIndex: number,
+  ) => {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+
+    event.preventDefault();
+    let nextIndex = currentIndex;
+    if (event.key === "ArrowLeft") {
+      nextIndex = (currentIndex - 1 + raceGalleries.length) % raceGalleries.length;
+    } else if (event.key === "ArrowRight") {
+      nextIndex = (currentIndex + 1) % raceGalleries.length;
+    } else if (event.key === "Home") {
+      nextIndex = 0;
+    } else if (event.key === "End") {
+      nextIndex = raceGalleries.length - 1;
+    }
+
+    selectRace(raceGalleries[nextIndex].id);
+    const tabs = event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>("[role='tab']");
+    window.requestAnimationFrame(() => tabs?.[nextIndex]?.focus());
+  };
+
   const zoomLightbox = (amount: number) => {
     setLightboxZoom((currentZoom) => {
-      const nextZoom = Math.min(3, Math.max(1, Number((currentZoom + amount).toFixed(2))));
-
-      if (nextZoom === 1) {
-        setLightboxPan({ x: 0, y: 0 });
-      }
-
+      const nextZoom = clamp(Number((currentZoom + amount).toFixed(2)), 1, 3);
+      if (nextZoom === 1) setLightboxPan({ x: 0, y: 0 });
       return nextZoom;
     });
+  };
+
+  const constrainPan = (x: number, y: number) => {
+    const stage = lightboxStageRef.current;
+    const image = lightboxImageRef.current;
+    if (!stage || !image || lightboxZoom <= 1) return { x: 0, y: 0 };
+
+    const maxX = Math.max(0, (image.clientWidth * lightboxZoom - stage.clientWidth) / 2);
+    const maxY = Math.max(0, (image.clientHeight * lightboxZoom - stage.clientHeight) / 2);
+    return { x: clamp(x, -maxX, maxX), y: clamp(y, -maxY, maxY) };
   };
 
   const handleLightboxWheel = (event: WheelEvent<HTMLDivElement>) => {
@@ -206,10 +288,6 @@ export function App() {
   };
 
   const handleLightboxPointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    if (lightboxZoom <= 1) {
-      return;
-    }
-
     event.currentTarget.setPointerCapture(event.pointerId);
     dragStart.current = {
       pointerX: event.clientX,
@@ -217,174 +295,359 @@ export function App() {
       panX: lightboxPan.x,
       panY: lightboxPan.y,
     };
-    setIsDraggingLightbox(true);
+    if (lightboxZoom > 1) setIsDraggingLightbox(true);
   };
 
   const handleLightboxPointerMove = (event: PointerEvent<HTMLDivElement>) => {
-    if (!isDraggingLightbox || lightboxZoom <= 1) {
-      return;
-    }
-
-    setLightboxPan({
-      x: dragStart.current.panX + event.clientX - dragStart.current.pointerX,
-      y: dragStart.current.panY + event.clientY - dragStart.current.pointerY,
-    });
+    if (!isDraggingLightbox || lightboxZoom <= 1) return;
+    setLightboxPan(
+      constrainPan(
+        dragStart.current.panX + event.clientX - dragStart.current.pointerX,
+        dragStart.current.panY + event.clientY - dragStart.current.pointerY,
+      ),
+    );
   };
 
   const stopLightboxDrag = (event: PointerEvent<HTMLDivElement>) => {
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
-
+    if (lightboxZoom === 1) {
+      const swipeDistance = event.clientX - dragStart.current.pointerX;
+      if (Math.abs(swipeDistance) > 56) showGalleryImage(swipeDistance < 0 ? 1 : -1);
+    }
     setIsDraggingLightbox(false);
   };
 
   useEffect(() => {
-    if (lightboxIndex === null) {
-      return;
-    }
+    const handleScroll = () => {
+      const nextScrollY = window.scrollY;
+      const scrollDelta = nextScrollY - lastScrollY.current;
+      setIsScrolled(nextScrollY > 48);
 
+      if (nextScrollY < 96 || scrollDelta < -6) {
+        setIsHeaderHidden(false);
+      } else if (scrollDelta > 6) {
+        setIsHeaderHidden(true);
+      }
+
+      if (Math.abs(scrollDelta) > 6) lastScrollY.current = nextScrollY;
+    };
+    lastScrollY.current = window.scrollY;
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    const sections = ["top", ...navItems.map(({ id }) => id)]
+      .map((id) => document.getElementById(id))
+      .filter((section): section is HTMLElement => Boolean(section));
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible?.target.id) setActiveSection(visible.target.id);
+      },
+      { rootMargin: "-28% 0px -58%", threshold: [0, 0.1, 0.35] },
+    );
+    sections.forEach((section) => observer.observe(section));
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      observer.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isMenuOpen) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    const firstLink = headerRef.current?.querySelector<HTMLAnchorElement>(".nav-links a");
+    window.requestAnimationFrame(() => firstLink?.focus());
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        closeGalleryImage();
+        setIsMenuOpen(false);
+        menuButtonRef.current?.focus();
+        return;
       }
-
-      if (event.key === "ArrowLeft") {
-        showGalleryImage(-1);
+      if (event.key !== "Tab" || !headerRef.current) return;
+      const focusable = Array.from(
+        headerRef.current.querySelectorAll<HTMLElement>("a[href], button:not([disabled])"),
+      ).filter((element) => element.offsetParent !== null);
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
       }
+    };
 
-      if (event.key === "ArrowRight") {
-        showGalleryImage(1);
-      }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isMenuOpen]);
 
-      if (event.key === "+" || event.key === "=") {
-        zoomLightbox(0.25);
-      }
+  useEffect(() => {
+    if (lightboxIndex === null) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.requestAnimationFrame(() => lightboxCloseRef.current?.focus());
 
-      if (event.key === "-") {
-        zoomLightbox(-0.25);
-      }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeGalleryImage();
+      if (event.key === "ArrowLeft") showGalleryImage(-1);
+      if (event.key === "ArrowRight") showGalleryImage(1);
+      if (event.key === "+" || event.key === "=") zoomLightbox(0.25);
+      if (event.key === "-") zoomLightbox(-0.25);
+      if (event.key === "0") resetLightboxView();
+      if (event.key !== "Tab" || !lightboxContentRef.current) return;
 
-      if (event.key === "0") {
-        resetLightboxView();
+      const focusable = Array.from(
+        lightboxContentRef.current.querySelectorAll<HTMLElement>("button:not([disabled])"),
+      );
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
-
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [lightboxIndex]);
+  }, [lightboxIndex, visibleGalleryImages.length]);
+
+  useEffect(() => {
+    const shell = shellRef.current;
+    if (!shell) return;
+    const finePointer = window.matchMedia("(pointer: fine)");
+    if (!finePointer.matches) return;
+
+    const handlePointer = (event: globalThis.PointerEvent) => {
+      shell.style.setProperty("--pointer-x", `${event.clientX}px`);
+      shell.style.setProperty("--pointer-y", `${event.clientY}px`);
+    };
+    window.addEventListener("pointermove", handlePointer, { passive: true });
+    return () => window.removeEventListener("pointermove", handlePointer);
+  }, []);
+
+  useEffect(() => {
+    const shell = shellRef.current;
+    if (!shell) return;
+
+    const context = gsap.context(() => {
+      const media = gsap.matchMedia();
+      media.add("(prefers-reduced-motion: no-preference)", () => {
+        const intro = gsap.timeline({ defaults: { ease: "power3.out" } });
+        intro
+          .from(".site-header", { y: -32, autoAlpha: 0, duration: 0.7, clearProps: "transform,opacity,visibility" })
+          .from(".hero-kicker", { y: 24, autoAlpha: 0, duration: 0.55 }, "-=0.3")
+          .from(".hero-title-line", { yPercent: 115, rotate: 2, duration: 0.95, stagger: 0.1 }, "-=0.2")
+          .from(".hero-intro", { y: 24, autoAlpha: 0, duration: 0.65 }, "-=0.45")
+          .from(".hero-partner-lockup", { y: 18, autoAlpha: 0, duration: 0.55 }, "-=0.35")
+          .fromTo(
+            ".lockup-separator",
+            { scale: 0.72, autoAlpha: 0.3, filter: "drop-shadow(0 0 0 rgba(255, 103, 31, 0))" },
+            {
+              scale: 1,
+              autoAlpha: 1,
+              filter: "drop-shadow(0 0 0.7rem rgba(255, 103, 31, 0.78))",
+              duration: 0.55,
+              ease: "back.out(2.2)",
+              clearProps: "scale,opacity,visibility,filter",
+            },
+            "-=0.18",
+          )
+          .set(".lockup-sweep", { autoAlpha: 0.5 }, "-=0.3")
+          .to(
+            ".lockup-sweep",
+            { xPercent: 520, autoAlpha: 0, duration: 0.85, ease: "power2.inOut" },
+            "-=0.3",
+          );
+
+        gsap.to(".hero-media", {
+          yPercent: 8,
+          ease: "none",
+          scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: 0.8 },
+        });
+        gsap.to(".hero-title", {
+          yPercent: 24,
+          autoAlpha: 0.25,
+          ease: "none",
+          scrollTrigger: { trigger: ".hero", start: "35% top", end: "bottom top", scrub: 0.7 },
+        });
+
+        gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((element) => {
+          gsap.from(element, {
+            y: 64,
+            autoAlpha: 0,
+            duration: 0.9,
+            ease: "power3.out",
+            clearProps: "transform,opacity,visibility",
+            scrollTrigger: { trigger: element, start: "top 88%", once: true },
+          });
+        });
+
+        gsap.utils.toArray<HTMLElement>("[data-stagger]").forEach((container) => {
+          gsap.from(Array.from(container.children), {
+            y: 58,
+            autoAlpha: 0,
+            duration: 0.8,
+            stagger: 0.1,
+            ease: "power3.out",
+            clearProps: "transform,opacity,visibility",
+            scrollTrigger: { trigger: container, start: "top 82%", once: true },
+          });
+        });
+
+        gsap.utils.toArray<HTMLElement>(".parallax-media").forEach((mediaElement) => {
+          gsap.fromTo(
+            mediaElement,
+            { yPercent: -4 },
+            {
+              yPercent: 4,
+              ease: "none",
+              scrollTrigger: { trigger: mediaElement, start: "top bottom", end: "bottom top", scrub: 0.8 },
+            },
+          );
+        });
+      });
+
+      return () => media.revert();
+    }, shell);
+
+    return () => context.revert();
+  }, []);
 
   return (
-    <div className="site-shell">
-      <header className="site-header" aria-label="Główna nawigacja">
-        <a className="brand-mark" href="#top" aria-label="Vento Team x Stahl System">
-          <span className="brand-flame">
-            <img src="/images/vento-mark.svg" alt="" />
-          </span>
-          <span>Vento Team</span>
+    <div className="site-shell" ref={shellRef}>
+      <div className="pointer-glow" aria-hidden="true" />
+      <header
+        className={`site-header${isScrolled ? " is-scrolled" : ""}${isHeaderHidden && !isMenuOpen ? " is-hidden" : ""}${isMenuOpen ? " is-open" : ""}`}
+        aria-label="Główna nawigacja"
+        onFocus={() => setIsHeaderHidden(false)}
+        ref={headerRef}
+      >
+        <a className="brand-mark" href="#top" aria-label="Vento Team — strona główna">
+          <span className="brand-flame"><img src="/images/vento-mark.svg" alt="" /></span>
+          <span className="brand-name">Vento Team</span>
         </a>
-        <nav className="nav-links">
-          <a href="#sklad">Skład</a>
-          <a href="#galeria">Galeria</a>
-          <a href="#partnerzy">Partnerzy</a>
-          <a href="#kontakt">Kontakt</a>
+
+        <button
+          className="menu-toggle"
+          type="button"
+          aria-expanded={isMenuOpen}
+          aria-controls="main-menu"
+          aria-label={isMenuOpen ? "Zamknij menu" : "Otwórz menu"}
+          onClick={() => {
+            setIsHeaderHidden(false);
+            setIsMenuOpen((open) => !open);
+          }}
+          ref={menuButtonRef}
+        >
+          {isMenuOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
+        </button>
+
+        <nav className="nav-links" id="main-menu" aria-label="Sekcje strony">
+          {navItems.map(({ id, label }, index) => (
+            <a
+              href={`#${id}`}
+              className={activeSection === id ? "is-active" : ""}
+              aria-current={activeSection === id ? "location" : undefined}
+              onClick={() => setIsMenuOpen(false)}
+              key={id}
+            >
+              <span>0{index + 1}</span>{label}
+            </a>
+          ))}
         </nav>
       </header>
+      {isMenuOpen ? (
+        <button className="menu-backdrop" type="button" aria-label="Zamknij menu" onClick={() => setIsMenuOpen(false)} />
+      ) : null}
 
       <main>
         <section className="hero" id="top" aria-labelledby="hero-title">
           <div className="hero-media" aria-hidden="true" />
-          <div className="hero-scrim" aria-hidden="true" />
-          <div className="hero-fire" aria-hidden="true">
-            <span className="fire-glow" />
-            <span className="ember ember-1" />
-            <span className="ember ember-2" />
-            <span className="ember ember-3" />
-            <span className="ember ember-4" />
-            <span className="ember ember-5" />
-            <span className="ember ember-6" />
-            <span className="ember ember-7" />
-            <span className="ember ember-8" />
-            <span className="ember ember-9" />
-            <span className="ember ember-10" />
-          </div>
-          <div className="hero-grid">
+          <div className="hero-overlay" aria-hidden="true" />
+          <div className="route-line route-line-hero" aria-hidden="true" />
+
+          <div className="hero-layout page-grid">
             <div className="hero-copy">
-              <p className="eyebrow">Drużyna MTB</p>
-              <h1 id="hero-title">
-                Vento Team <span>x Stahl System</span>
+              <p className="hero-kicker"><span>Vento Team</span> × Stahl System</p>
+              <h1 className="hero-title" id="hero-title" aria-label="Jedziemy po więcej">
+                <span className="hero-title-mask"><span className="hero-title-line">Jedziemy</span></span>
+                <span className="hero-title-mask"><span className="hero-title-line hero-title-accent">po więcej.</span></span>
               </h1>
-              <p className="hero-lead">
-                Ognisty charakter Vento spotyka stalową precyzję Stahl System.
-              </p>
-              <div className="hero-actions">
-                <a className="cta-button" href="#sklad">
-                  Poznaj skład
-                  <ArrowDown size={20} strokeWidth={2.5} aria-hidden="true" />
-                </a>
-                <div className="race-note" aria-label="Specjalizacja zespołu">
-                  <Mountain size={18} aria-hidden="true" />
-                  Ogień / stal / MTB
+              <div className="hero-intro">
+                <p>Jedna drużyna. Wspólny kierunek. Ogień Vento i stalowa precyzja na trasach MTB.</p>
+                <div className="hero-actions">
+                  <a className="button button-primary" href="#sklad">
+                    Poznaj ekipę <ArrowDown size={18} aria-hidden="true" />
+                  </a>
+                  <a className="button button-ghost" href="#galeria">
+                    Zobacz galerię <ArrowUpRight size={18} aria-hidden="true" />
+                  </a>
                 </div>
               </div>
             </div>
 
-            <aside className="hero-panel" aria-label="Tożsamość drużyny">
-              <div className="logo-lockup">
-                <img className="logo-vento" src="/images/vento-logo-dark.svg" alt="Vento" />
-                <span>x</span>
-                <img
-                  className="logo-stahl"
-                  src="/images/Stahl-System-Logo-light.svg"
-                  alt="Stahl System"
-                />
-              </div>
-              <div className="hero-metrics">
-                <div>
-                  <Flame size={22} aria-hidden="true" />
-                  <strong>Żar Vento</strong>
-                  <span>ognista energia z Kwidzyna od 1998</span>
-                </div>
-                <div>
-                  <ShieldCheck size={22} aria-hidden="true" />
-                  <strong>Stalowa precyzja</strong>
-                  <span>szczelność, odporność i precyzja</span>
-                </div>
+            <aside className="hero-partner-lockup" aria-label="Partnerzy tytularni drużyny">
+              <span className="lockup-sweep" aria-hidden="true" />
+              <span className="lockup-label">Napędzają nas</span>
+              <div className="lockup-logos">
+                <img className="lockup-logo lockup-logo-vento" src="/images/vento-logo-dark.svg" alt="Vento" />
+                <span className="lockup-separator">×</span>
+                <img className="lockup-logo lockup-logo-stahl" src="/images/Stahl-System-Logo-light.svg" alt="Stahl System" />
               </div>
             </aside>
           </div>
 
-          <a className="scroll-cue" href="#sklad" aria-label="Przewiń do sekcji skład">
-            <ArrowDown size={28} aria-hidden="true" />
+          <a className="scroll-cue" href="#sklad" aria-label="Przewiń do składu">
+            <span>Scroll</span><ArrowDown size={18} aria-hidden="true" />
           </a>
         </section>
 
         <section className="section roster-section" id="sklad" aria-labelledby="roster-title">
-          <div className="section-heading">
-            <p className="eyebrow">Skład zespołu</p>
-            <h2 id="roster-title">Razem na trasie, razem po więcej.</h2>
+          <div className="section-heading page-grid" data-reveal>
+            <div className="section-index"><span>01</span><span>Ekipa</span></div>
+            <div className="section-heading-copy">
+              <p className="eyebrow">Skład zespołu</p>
+              <h2 id="roster-title">
+                <span className="heading-line">Razem na trasie.</span>
+                <em className="heading-line heading-line-outline">Każdy po swojemu.</em>
+              </h2>
+            </div>
+            <p className="section-lead">Różne doświadczenia, wspólny kierunek — szybciej, pewniej i zawsze zespołowo.</p>
           </div>
 
-          <div className="roster-grid">
+          <div className="roster-grid page-grid" data-stagger>
             {teamMembers.map((member, index) => (
-              <article className="rider-card" key={member.name}>
-                <div className={`rider-photo rider-photo-${index + 1}`}>
+              <article className={`rider-card rider-card-${index + 1}`} key={member.name}>
+                <div className="rider-photo parallax-media">
                   <img
                     src={member.photo}
                     alt={member.photoAlt}
                     loading="lazy"
+                    decoding="async"
                     style={{ objectPosition: member.photoPosition }}
                   />
                 </div>
+                <div className="rider-shade" aria-hidden="true" />
+                <div className="rider-topline"><span>{member.accent}</span><span>0{index + 1}</span></div>
                 <div className="rider-content">
-                  <p>{member.city}</p>
+                  <p className="rider-city">{member.city}</p>
                   <h3>{member.name}</h3>
                   <a
                     className="strava-link"
@@ -393,9 +656,7 @@ export function App() {
                     rel="noreferrer"
                     aria-label={`Profil Strava: ${member.name}`}
                   >
-                    <FaStrava aria-hidden="true" />
-                    Strava
-                    <ExternalLink size={14} aria-hidden="true" />
+                    <FaStrava aria-hidden="true" /><span>Strava</span><ExternalLink size={15} aria-hidden="true" />
                   </a>
                 </div>
               </article>
@@ -404,166 +665,162 @@ export function App() {
         </section>
 
         <section className="section gallery-section" id="galeria" aria-labelledby="gallery-title">
-          <div className="section-heading">
-            <p className="eyebrow">Ostatni wyścig</p>
-            <h2 id="gallery-title">Kadry z trasy MTB Pomerania.</h2>
+          <div className="route-line route-line-gallery" aria-hidden="true" />
+          <div className="section-heading section-heading-gallery page-grid" data-reveal>
+            <div className="section-index"><span>02</span><span>Na trasie</span></div>
+            <div className="section-heading-copy">
+              <p className="eyebrow">Galeria zespołu</p>
+              <h2 id="gallery-title">
+                <span className="heading-line">Kadry z tras.</span>
+                <em className="heading-line heading-line-outline">Prawdziwe emocje.</em>
+              </h2>
+            </div>
+            <p className="section-lead">Zdjęcia z wyścigów, wspólnych startów i chwil, do których chce się wracać.</p>
           </div>
 
-          <div className="gallery-grid">
+          <div className="race-switcher page-grid" aria-label="Wybierz wydarzenie">
+            {raceGalleries.length > 1 ? (
+              <div className="race-tabs" role="tablist" aria-label="Galerie z wydarzeń">
+                {raceGalleries.map((race, raceIndex) => (
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={race.id === selectedRaceId}
+                    aria-controls="race-gallery-panel"
+                    tabIndex={race.id === selectedRaceId ? 0 : -1}
+                    className={race.id === selectedRaceId ? "is-active" : ""}
+                    onClick={() => selectRace(race.id)}
+                    onKeyDown={(event) => handleRaceTabKeyDown(event, raceIndex)}
+                    key={race.id}
+                  >
+                    <span>{race.name}</span><small>{race.date}</small>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="race-current"><span>{activeRace.name}</span><small>{activeRace.date}</small></p>
+            )}
+          </div>
+
+          <div
+            className="gallery-grid page-grid"
+            id="race-gallery-panel"
+            role={raceGalleries.length > 1 ? "tabpanel" : undefined}
+            aria-live="polite"
+            data-stagger
+            key={activeRace.id}
+          >
             {visibleGalleryImages.map((image, index) => (
               <button
                 type="button"
                 className={`gallery-item${image.featured ? " gallery-item-featured" : ""}`}
                 key={image.src}
-                onClick={() => openGalleryImage(index)}
+                onClick={(event) => openGalleryImage(index, event.currentTarget)}
                 aria-label={`Otwórz zdjęcie: ${image.label}`}
               >
-                <img src={image.src} alt={image.alt} loading="lazy" />
-                <span className="gallery-caption">{image.label}</span>
+                <span className="gallery-media parallax-media">
+                  <img src={image.src} alt={image.alt} loading="lazy" decoding="async" />
+                </span>
+                <span className="gallery-caption"><span>0{index + 1}</span>{image.label}</span>
+                <span className="gallery-open" aria-hidden="true"><Plus size={18} /></span>
               </button>
             ))}
           </div>
         </section>
 
         <section className="section sponsors-section" id="partnerzy" aria-labelledby="sponsors-title">
-          <div className="section-heading">
-            <p className="eyebrow">Partnerzy i sponsorzy</p>
-            <h2 id="sponsors-title">Zaplecze, które napędza drużynę.</h2>
+          <div className="section-heading page-grid" data-reveal>
+            <div className="section-index"><span>03</span><span>Partnerzy</span></div>
+            <div className="section-heading-copy">
+              <p className="eyebrow">Partnerzy i sponsorzy</p>
+              <h2 id="sponsors-title">
+                <span className="heading-line">Mocne zaplecze.</span>
+                <em className="heading-line heading-line-outline">Wspólny kierunek.</em>
+              </h2>
+            </div>
+            <p className="section-lead">Za każdym startem stoi doświadczenie, technologia i ludzie, którzy wierzą w tę drużynę.</p>
           </div>
 
-          <div className="sponsors-grid">
-            {sponsors.map((sponsor) => {
-              const content = (
-                <>
-                  <span className="sponsor-label">{sponsor.label}</span>
-                  <span className="sponsor-logo">
-                    <img className="logo-base" src={sponsor.logo} alt={sponsor.name} />
-                    {sponsor.logoColor ? (
-                      <img className="logo-color" src={sponsor.logoColor} alt="" aria-hidden="true" />
-                    ) : null}
-                  </span>
-                  <span className="sponsor-name">{sponsor.name}</span>
-                  <span className="sponsor-description">{sponsor.description}</span>
-                  <span className="sponsor-cta">
-                    Strona partnera
-                    <ExternalLink size={16} aria-hidden="true" />
-                  </span>
-                </>
-              );
-
-              return sponsor.href ? (
-                <a
-                  className={`sponsor-card sponsor-card-${sponsor.emphasis}`}
-                  href={sponsor.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  key={sponsor.name}
-                >
-                  {content}
-                </a>
-              ) : (
-                <div className={`sponsor-card sponsor-card-${sponsor.emphasis}`} key={sponsor.name}>
-                  {content}
-                </div>
-              );
-            })}
+          <div className="sponsors-grid page-grid" data-stagger>
+            {sponsors.map((sponsor, index) => (
+              <a
+                className={`sponsor-card sponsor-card-${sponsor.emphasis}`}
+                href={sponsor.href}
+                target="_blank"
+                rel="noreferrer"
+                key={sponsor.name}
+              >
+                <span className="sponsor-number">0{index + 1}</span>
+                <span className="sponsor-label">{sponsor.label}</span>
+                <span className="sponsor-logo">
+                  <img className="logo-base" src={sponsor.logo} alt={sponsor.name} />
+                </span>
+                <span className="sponsor-meta">
+                  <span><strong>{sponsor.name}</strong><small>{sponsor.description}</small></span>
+                  <span className="sponsor-arrow"><ArrowUpRight size={20} aria-hidden="true" /></span>
+                </span>
+              </a>
+            ))}
           </div>
         </section>
       </main>
 
       <footer className="site-footer" id="kontakt">
-        <div className="footer-inner">
+        <div className="footer-cta page-grid" data-reveal>
+          <div className="section-index"><span>04</span><span>Kontakt</span></div>
           <div className="footer-copy">
-            <p className="eyebrow">Kontakt</p>
-            <h2>Porozmawiajmy o współpracy.</h2>
-            <p>
-              Szukasz drużyny MTB z mocnym charakterem, dobrą ekspozycją i sportową energią?
-              Napisz do nas bezpośrednio.
-            </p>
-            <div className="footer-tags" aria-label="Obszary współpracy">
-              <span>Partnerstwa sportowe</span>
-              <span>Akcje brandowe</span>
-              <span>Starty MTB</span>
-            </div>
+            <p className="eyebrow">Jedźmy razem</p>
+            <h2>
+              <span className="heading-line">Masz pomysł?</span>
+              <em className="heading-line heading-line-outline">Porozmawiajmy.</em>
+            </h2>
           </div>
-
-          <div className="contact-card" aria-label="Dane kontaktowe">
-            <p className="contact-title">Napisz do nas</p>
+          <p className="footer-description">Szukasz drużyny MTB z charakterem, dobrą ekspozycją i sportową energią? Jesteśmy otwarci na współpracę.</p>
+          <div className="contact-actions">
             <a className="mail-link" href="mailto:kontakt@ventoteam.com">
-              <Mail size={20} aria-hidden="true" />
-              kontakt@ventoteam.com
+              <span><Mail size={20} aria-hidden="true" />Napisz do nas</span>
+              <strong>kontakt@ventoteam.com</strong>
+              <ArrowUpRight aria-hidden="true" />
             </a>
-            <div className="location-note">
-              <MapPin size={18} aria-hidden="true" />
-              Polska / starty MTB / partnerstwa sportowe
-            </div>
-            <nav className="social-links" aria-label="Media społecznościowe">
-              {socials.map(({ label, icon: Icon, href }) => (
-                <a href={href} aria-label={label} key={label}>
-                  <Icon aria-hidden="true" />
-                  <span>{label}</span>
-                </a>
-              ))}
-            </nav>
+            <div className="location-note"><MapPin size={18} aria-hidden="true" />Polska / starty MTB / partnerstwa</div>
           </div>
         </div>
 
-        <p className="copyright">
-          © {new Date().getFullYear()} Vento Team x Stahl System. Wszelkie prawa zastrzeżone.
-        </p>
-        <p className="site-credit">
-          Realizacja i projekt strony:{" "}
-          <a href="https://igorjoz.com/" target="_blank" rel="noreferrer">
-            Igor Józefowicz
-          </a>
-        </p>
+        <div className="footer-bottom page-grid">
+          <a className="footer-brand" href="#top"><img src="/images/vento-mark.svg" alt="" /><span>Vento Team</span></a>
+          <nav className="social-links" aria-label="Media społecznościowe">
+            {socials.map(({ label, icon: Icon, href }) => (
+              <a href={href} target="_blank" rel="noreferrer" aria-label={label} key={label}>
+                <Icon aria-hidden="true" /><span>{label}</span>
+              </a>
+            ))}
+          </nav>
+          <div className="footer-legal">
+            <span>© {new Date().getFullYear()} Vento Team × Stahl System</span>
+            <a href="https://igorjoz.com/" target="_blank" rel="noreferrer">Realizacja: Webeter · Igor Józefowicz</a>
+          </div>
+        </div>
       </footer>
 
       {activeGalleryImage ? (
         <div className="gallery-lightbox" role="dialog" aria-modal="true" aria-label="Podgląd zdjęcia">
-          <button
-            className="lightbox-backdrop"
-            type="button"
-            onClick={closeGalleryImage}
-            aria-label="Zamknij podgląd"
-          />
-          <div className="lightbox-content">
+          <button className="lightbox-backdrop" type="button" onClick={closeGalleryImage} aria-label="Zamknij podgląd" />
+          <div className="lightbox-content" ref={lightboxContentRef}>
             <div className="lightbox-toolbar">
-              <span>{activeGalleryImage.label}</span>
+              <span><small>0{(lightboxIndex ?? 0) + 1} / 0{visibleGalleryImages.length}</small>{activeGalleryImage.label}</span>
               <div className="lightbox-actions">
-                <button
-                  type="button"
-                  onClick={() => zoomLightbox(-0.25)}
-                  disabled={lightboxZoom <= 1}
-                  aria-label="Pomniejsz zdjęcie"
-                >
-                  <Minus size={18} aria-hidden="true" />
-                </button>
-                <button type="button" onClick={() => zoomLightbox(0.25)} aria-label="Powiększ zdjęcie">
-                  <Plus size={18} aria-hidden="true" />
-                </button>
-                <button type="button" onClick={resetLightboxView} aria-label="Resetuj przybliżenie">
-                  <RotateCcw size={18} aria-hidden="true" />
-                </button>
-                <button type="button" onClick={closeGalleryImage} aria-label="Zamknij podgląd">
-                  <X size={20} aria-hidden="true" />
-                </button>
+                <button type="button" onClick={() => zoomLightbox(-0.25)} disabled={lightboxZoom <= 1} aria-label="Pomniejsz zdjęcie"><Minus size={18} /></button>
+                <span aria-live="polite">{Math.round(lightboxZoom * 100)}%</span>
+                <button type="button" onClick={() => zoomLightbox(0.25)} disabled={lightboxZoom >= 3} aria-label="Powiększ zdjęcie"><Plus size={18} /></button>
+                <button type="button" onClick={resetLightboxView} disabled={lightboxZoom === 1} aria-label="Resetuj przybliżenie"><RotateCcw size={18} /></button>
+                <button type="button" onClick={closeGalleryImage} aria-label="Zamknij podgląd" ref={lightboxCloseRef}><X size={20} /></button>
               </div>
             </div>
 
-            <button
-              className="lightbox-nav lightbox-nav-prev"
-              type="button"
-              onClick={() => showGalleryImage(-1)}
-              aria-label="Poprzednie zdjęcie"
-            >
-              <ChevronLeft size={32} aria-hidden="true" />
-            </button>
-
+            <button className="lightbox-nav lightbox-nav-prev" type="button" onClick={() => showGalleryImage(-1)} aria-label="Poprzednie zdjęcie"><ChevronLeft size={32} /></button>
             <div
-              className={`lightbox-stage${lightboxZoom > 1 ? " is-zoomed" : ""}${
-                isDraggingLightbox ? " is-dragging" : ""
-              }`}
+              className={`lightbox-stage${lightboxZoom > 1 ? " is-zoomed" : ""}${isDraggingLightbox ? " is-dragging" : ""}`}
+              ref={lightboxStageRef}
               onWheel={handleLightboxWheel}
               onPointerDown={handleLightboxPointerDown}
               onPointerMove={handleLightboxPointerMove}
@@ -572,23 +829,14 @@ export function App() {
               onDoubleClick={() => (lightboxZoom > 1 ? resetLightboxView() : zoomLightbox(1))}
             >
               <img
+                ref={lightboxImageRef}
                 src={activeGalleryImage.src}
                 alt={activeGalleryImage.alt}
                 draggable="false"
-                style={{
-                  transform: `translate3d(${lightboxPan.x}px, ${lightboxPan.y}px, 0) scale(${lightboxZoom})`,
-                }}
+                style={{ transform: `translate3d(${lightboxPan.x}px, ${lightboxPan.y}px, 0) scale(${lightboxZoom})` }}
               />
             </div>
-
-            <button
-              className="lightbox-nav lightbox-nav-next"
-              type="button"
-              onClick={() => showGalleryImage(1)}
-              aria-label="Następne zdjęcie"
-            >
-              <ChevronRight size={32} aria-hidden="true" />
-            </button>
+            <button className="lightbox-nav lightbox-nav-next" type="button" onClick={() => showGalleryImage(1)} aria-label="Następne zdjęcie"><ChevronRight size={32} /></button>
           </div>
         </div>
       ) : null}
