@@ -88,19 +88,19 @@ const athletePhotos: AthletePhoto[] = [
   { file: "10-Wiktor", width: 1600, height: 1066 },
   { file: "11-Wiktor-i-Cezary", width: 1600, height: 1064 },
   { file: "12-Cezary", width: 1066, height: 1600 },
-  { file: "12-Wiktor", width: 1600, height: 1064 },
-  { file: "13-Zuzia", width: 1600, height: 1064 },
-  { file: "14-Igor", width: 2048, height: 1365 },
-  { file: "15-Zuzia", width: 1066, height: 1600 },
+  { file: "13-Wiktor", width: 1600, height: 1064 },
+  { file: "14-Zuzia", width: 1600, height: 1064 },
+  { file: "15-Igor", width: 2048, height: 1365 },
   { file: "16-Zuzia", width: 1066, height: 1600 },
-  { file: "17-Zuzia", width: 1600, height: 1066 },
-  { file: "18-Zuzia", width: 1920, height: 1280 },
-  { file: "19-Igor", width: 1600, height: 1066 },
-  { file: "20-Zuzia", width: 1365, height: 2048 },
-  { file: "21-Igor", width: 1600, height: 1064 },
-  { file: "22-Zuzia", width: 4032, height: 2268 },
-  { file: "23-Igor", width: 1600, height: 1066 },
-  { file: "24-Zuzia", width: 1080, height: 720 },
+  { file: "17-Zuzia", width: 1066, height: 1600 },
+  { file: "18-Zuzia", width: 1600, height: 1066 },
+  { file: "19-Zuzia", width: 1920, height: 1280 },
+  { file: "20-Igor", width: 1600, height: 1066 },
+  { file: "21-Zuzia", width: 1365, height: 2048 },
+  { file: "22-Igor", width: 1600, height: 1064 },
+  { file: "23-Zuzia", width: 4032, height: 2268 },
+  { file: "24-Igor", width: 1600, height: 1066 },
+  { file: "25-Zuzia", width: 1080, height: 720 },
 ].map(({ file, width, height }) => {
   const people = file.replace(/^\d+-/, "").split("-i-");
   return {
@@ -250,6 +250,7 @@ export function App() {
   const [lightboxZoom, setLightboxZoom] = useState(1);
   const [lightboxPan, setLightboxPan] = useState({ x: 0, y: 0 });
   const [isDraggingLightbox, setIsDraggingLightbox] = useState(false);
+  const [loadedLightboxSrc, setLoadedLightboxSrc] = useState<string | null>(null);
 
   const activeRace = useMemo(
     () => raceGalleries.find((race) => race.id === selectedRaceId) ?? raceGalleries[0],
@@ -261,6 +262,10 @@ export function App() {
   );
   const activeLightboxImages = lightboxCollection === "athletes" ? athletePhotos : visibleGalleryImages;
   const activeGalleryImage = lightboxIndex === null ? null : activeLightboxImages[lightboxIndex];
+  const isLightboxImageLoaded = activeGalleryImage ? loadedLightboxSrc === activeGalleryImage.src : false;
+  const hasDistinctLightboxPreview = Boolean(
+    activeGalleryImage?.previewSrc && activeGalleryImage.previewSrc !== activeGalleryImage.src,
+  );
 
   const resetLightboxView = () => {
     setLightboxZoom(1);
@@ -284,6 +289,7 @@ export function App() {
 
   const showGalleryImage = (direction: number) => {
     resetLightboxView();
+    setLoadedLightboxSrc(null);
     setLightboxIndex((currentIndex) => {
       if (currentIndex === null) return currentIndex;
       return (currentIndex + direction + activeLightboxImages.length) % activeLightboxImages.length;
@@ -488,6 +494,20 @@ export function App() {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [lightboxIndex, activeLightboxImages.length]);
+
+  useEffect(() => {
+    if (!activeGalleryImage) return;
+    const currentIndex = lightboxIndex ?? 0;
+    const preloadIndexes = [
+      (currentIndex + 1) % activeLightboxImages.length,
+      (currentIndex - 1 + activeLightboxImages.length) % activeLightboxImages.length,
+    ];
+
+    preloadIndexes.forEach((index) => {
+      const image = new Image();
+      image.src = activeLightboxImages[index].src;
+    });
+  }, [activeGalleryImage, lightboxIndex, activeLightboxImages]);
 
   useEffect(() => {
     const shell = shellRef.current;
@@ -919,13 +939,31 @@ export function App() {
               onPointerCancel={stopLightboxDrag}
               onDoubleClick={() => (lightboxZoom > 1 ? resetLightboxView() : zoomLightbox(1))}
             >
+              {hasDistinctLightboxPreview ? (
+                <img
+                  className="lightbox-preview"
+                  src={activeGalleryImage.previewSrc}
+                  alt=""
+                  aria-hidden="true"
+                  draggable="false"
+                  style={{ transform: `translate3d(${lightboxPan.x}px, ${lightboxPan.y}px, 0) scale(${lightboxZoom})` }}
+                />
+              ) : null}
               <img
+                className={`lightbox-full${isLightboxImageLoaded ? " is-loaded" : ""}`}
+                key={activeGalleryImage.src}
                 ref={lightboxImageRef}
                 src={activeGalleryImage.src}
                 alt={activeGalleryImage.alt}
                 draggable="false"
+                onLoad={() => setLoadedLightboxSrc(activeGalleryImage.src)}
                 style={{ transform: `translate3d(${lightboxPan.x}px, ${lightboxPan.y}px, 0) scale(${lightboxZoom})` }}
               />
+              {!isLightboxImageLoaded ? (
+                <div className="lightbox-loading" role="status" aria-live="polite" aria-label="Ładowanie zdjęcia">
+                  <span className="lightbox-loading-spinner" aria-hidden="true" />
+                </div>
+              ) : null}
             </div>
             <button className="lightbox-nav lightbox-nav-next" type="button" onClick={() => showGalleryImage(1)} aria-label="Następne zdjęcie"><ChevronRight size={32} /></button>
           </div>
