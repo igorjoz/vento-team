@@ -63,6 +63,13 @@ type RaceGallery = {
   images: GalleryImage[];
 };
 
+type MasonryPosition = {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+};
+
 type Sponsor = {
   name: string;
   label: string;
@@ -248,6 +255,8 @@ export function App() {
   const [lightboxPan, setLightboxPan] = useState({ x: 0, y: 0 });
   const [isDraggingLightbox, setIsDraggingLightbox] = useState(false);
   const [loadedLightboxSrc, setLoadedLightboxSrc] = useState<string | null>(null);
+  const [athleteMasonryPositions, setAthleteMasonryPositions] = useState<MasonryPosition[]>([]);
+  const [athleteMasonryHeight, setAthleteMasonryHeight] = useState(0);
 
   const activeRace = useMemo(
     () => raceGalleries.find((race) => race.id === selectedRaceId) ?? raceGalleries[0],
@@ -525,34 +534,48 @@ export function App() {
     if (!mosaic) return;
 
     let animationFrame = 0;
+    let previousLayoutSignature = "";
     const updateMasonry = () => {
       window.cancelAnimationFrame(animationFrame);
       animationFrame = window.requestAnimationFrame(() => {
         const styles = window.getComputedStyle(mosaic);
-        const rowHeight = Number.parseFloat(styles.gridAutoRows);
-        const rowGap = Number.parseFloat(styles.rowGap);
-        if (!Number.isFinite(rowHeight) || !Number.isFinite(rowGap)) return;
+        const gap = Number.parseFloat(styles.columnGap);
+        const containerWidth = mosaic.clientWidth;
+        const columnCount = window.innerWidth >= 1700 ? 5 : window.innerWidth > 1100 ? 4 : window.innerWidth > 760 ? 3 : 2;
+        const layoutSignature = `${containerWidth}:${columnCount}:${gap}`;
+        if (!containerWidth || !Number.isFinite(gap) || layoutSignature === previousLayoutSignature) return;
+        previousLayoutSignature = layoutSignature;
 
-        Array.from(mosaic.children).forEach((tile, index) => {
-          if (!(tile instanceof HTMLElement)) return;
-          const photo = athletePhotos[index];
-          if (!photo) return;
-
-          const tileWidth = tile.getBoundingClientRect().width;
-          const borderHeight = tile.offsetHeight - tile.clientHeight;
-          const targetHeight = tileWidth * (photo.height / photo.width) + borderHeight;
-          const rowSpan = Math.max(1, Math.ceil((targetHeight + rowGap) / (rowHeight + rowGap)));
-          tile.style.gridRowEnd = `span ${rowSpan}`;
+        const columnWidth = (containerWidth - gap * (columnCount - 1)) / columnCount;
+        const columnHeights = Array<number>(columnCount).fill(0);
+        const positions = athletePhotos.map((photo, index) => {
+          const column = index < columnCount
+            ? index
+            : columnHeights.indexOf(Math.min(...columnHeights));
+          const height = columnWidth * (photo.height / photo.width);
+          const position = {
+            left: column * (columnWidth + gap),
+            top: columnHeights[column],
+            width: columnWidth,
+            height,
+          };
+          columnHeights[column] += height + gap;
+          return position;
         });
+
+        setAthleteMasonryPositions(positions);
+        setAthleteMasonryHeight(Math.max(...columnHeights) - gap);
       });
     };
 
     const resizeObserver = new ResizeObserver(updateMasonry);
     resizeObserver.observe(mosaic);
+    window.addEventListener("resize", updateMasonry, { passive: true });
     updateMasonry();
 
     return () => {
       resizeObserver.disconnect();
+      window.removeEventListener("resize", updateMasonry);
       window.cancelAnimationFrame(animationFrame);
     };
   }, []);
@@ -805,6 +828,7 @@ export function App() {
             data-reveal
             aria-label="Zdjęcia zawodników Vento Team"
             ref={athleteMosaicRef}
+            style={{ height: athleteMasonryHeight || undefined }}
           >
             {athletePhotos.map((photo, index) => (
               <button
@@ -813,6 +837,7 @@ export function App() {
                 onClick={(event) => openGalleryImage("athletes", index, event.currentTarget)}
                 aria-label={`Otwórz zdjęcie: ${photo.label}`}
                 key={photo.src}
+                style={athleteMasonryPositions[index]}
               >
                 <img
                   src={photo.previewSrc}
