@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -30,7 +31,6 @@ gsap.registerPlugin(ScrollTrigger);
 type TeamMember = {
   name: string;
   city: string;
-  accent: string;
   photo: string;
   photoAlt: string;
   photoPosition: string;
@@ -118,7 +118,6 @@ const teamMembers: TeamMember[] = [
   {
     name: "Igor",
     city: "Kwidzyn",
-    accent: "Start",
     photo: `${raceFolder}/Z6G_1098-Igor-1.jpg`,
     photoAlt: "Igor podczas wyścigu MTB Pomerania",
     photoPosition: "50% 42%",
@@ -127,7 +126,6 @@ const teamMembers: TeamMember[] = [
   {
     name: "Wiktor",
     city: "Kwidzyn",
-    accent: "Stal",
     photo: `${raceFolder}/Z6G_1305-Wiktor.jpg`,
     photoAlt: "Wiktor na trasie wyścigu MTB Pomerania",
     photoPosition: "50% 38%",
@@ -136,7 +134,6 @@ const teamMembers: TeamMember[] = [
   {
     name: "Cezary",
     city: "Susz",
-    accent: "Tempo",
     photo: `${raceFolder}/Z6G_1323-Cezary.jpg`,
     photoAlt: "Cezary w trakcie wyścigu MTB Pomerania",
     photoPosition: "50% 42%",
@@ -145,7 +142,6 @@ const teamMembers: TeamMember[] = [
   {
     name: "Zuzia",
     city: "Józefów",
-    accent: "Kontrola",
     photo: `${raceFolder}/Z6G_1332-Zuzia-1.jpg`,
     photoAlt: "Zuzia na trasie wyścigu MTB Pomerania",
     photoPosition: "50% 44%",
@@ -237,6 +233,7 @@ export function App() {
   const lightboxStageRef = useRef<HTMLDivElement>(null);
   const lightboxImageRef = useRef<HTMLImageElement>(null);
   const lightboxCloseRef = useRef<HTMLButtonElement>(null);
+  const athleteMosaicRef = useRef<HTMLDivElement>(null);
   const lightboxReturnFocus = useRef<HTMLElement | null>(null);
   const lastScrollY = useRef(0);
   const dragStart = useRef({ pointerX: 0, pointerY: 0, panX: 0, panY: 0 });
@@ -523,6 +520,43 @@ export function App() {
     return () => window.removeEventListener("pointermove", handlePointer);
   }, []);
 
+  useLayoutEffect(() => {
+    const mosaic = athleteMosaicRef.current;
+    if (!mosaic) return;
+
+    let animationFrame = 0;
+    const updateMasonry = () => {
+      window.cancelAnimationFrame(animationFrame);
+      animationFrame = window.requestAnimationFrame(() => {
+        const styles = window.getComputedStyle(mosaic);
+        const rowHeight = Number.parseFloat(styles.gridAutoRows);
+        const rowGap = Number.parseFloat(styles.rowGap);
+        if (!Number.isFinite(rowHeight) || !Number.isFinite(rowGap)) return;
+
+        Array.from(mosaic.children).forEach((tile, index) => {
+          if (!(tile instanceof HTMLElement)) return;
+          const photo = athletePhotos[index];
+          if (!photo) return;
+
+          const tileWidth = tile.getBoundingClientRect().width;
+          const borderHeight = tile.offsetHeight - tile.clientHeight;
+          const targetHeight = tileWidth * (photo.height / photo.width) + borderHeight;
+          const rowSpan = Math.max(1, Math.ceil((targetHeight + rowGap) / (rowHeight + rowGap)));
+          tile.style.gridRowEnd = `span ${rowSpan}`;
+        });
+      });
+    };
+
+    const resizeObserver = new ResizeObserver(updateMasonry);
+    resizeObserver.observe(mosaic);
+    updateMasonry();
+
+    return () => {
+      resizeObserver.disconnect();
+      window.cancelAnimationFrame(animationFrame);
+    };
+  }, []);
+
   useEffect(() => {
     const shell = shellRef.current;
     if (!shell) return;
@@ -688,9 +722,25 @@ export function App() {
               <span className="lockup-sweep" aria-hidden="true" />
               <span className="lockup-label">Napędzają nas</span>
               <div className="lockup-logos">
-                <img className="lockup-logo lockup-logo-vento" src="/images/vento-logo-dark.svg" alt="Vento" />
+                <a
+                  className="lockup-logo lockup-logo-vento"
+                  href={sponsors[0].href}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Odwiedź stronę Vento"
+                >
+                  <img src={sponsors[0].logo} alt="Vento" />
+                </a>
                 <span className="lockup-separator">×</span>
-                <img className="lockup-logo lockup-logo-stahl" src="/images/Stahl-System-Logo-light.svg" alt="Stahl System" />
+                <a
+                  className="lockup-logo lockup-logo-stahl"
+                  href={sponsors[1].href}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Odwiedź stronę Stahl System"
+                >
+                  <img src={sponsors[1].logo} alt="Stahl System" />
+                </a>
               </div>
             </aside>
           </div>
@@ -726,7 +776,7 @@ export function App() {
                   />
                 </div>
                 <div className="rider-shade" aria-hidden="true" />
-                <div className="rider-topline"><span>{member.accent}</span><span>0{index + 1}</span></div>
+                <div className="rider-topline"><span>0{index + 1}</span></div>
                 <div className="rider-content">
                   <p className="rider-city">{member.city}</p>
                   <h3>{member.name}</h3>
@@ -750,7 +800,12 @@ export function App() {
             <p>Starty, treningi i emocje zapisane w kadrach.</p>
           </div>
 
-          <div className="athlete-mosaic page-grid" data-reveal aria-label="Zdjęcia zawodników Vento Team">
+          <div
+            className="athlete-mosaic page-grid"
+            data-reveal
+            aria-label="Zdjęcia zawodników Vento Team"
+            ref={athleteMosaicRef}
+          >
             {athletePhotos.map((photo, index) => (
               <button
                 className="athlete-photo"
