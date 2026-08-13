@@ -8,10 +8,13 @@ import "@fontsource/manrope/600.css";
 import "@fontsource/manrope/700.css";
 import "@fontsource/manrope/800.css";
 import { App } from "./App";
+import { RegulationsPage } from "./RegulationsPage";
 import "./styles.css";
+
+const normalizedPath = window.location.pathname.replace(/\/$/, "") || "/";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App />
+    {normalizedPath === "/regulamin" ? <RegulationsPage /> : <App />}
   </React.StrictMode>,
 );
