@@ -988,6 +988,7 @@ export function App() {
           </nav>
           <div className="footer-legal">
             <span>© {new Date().getFullYear()} Vento Team × Stahl System</span>
+            <a href="/regulamin">Regulamin</a>
             <a href="https://igorjoz.com/" target="_blank" rel="noreferrer">Realizacja: Webeter · Igor Józefowicz</a>
           </div>
         </div>
