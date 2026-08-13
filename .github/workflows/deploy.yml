@@ -59,6 +59,5 @@ jobs:
           test -n "$SSH_PORT"
           test -n "$SSH_USER"
           rsync --archive --compress --delete --human-readable \
-            --exclude='.htaccess' \
             --rsh="ssh -i ~/.ssh/github_actions_hostinger -p $SSH_PORT" \
             dist/ "$SSH_USER@$SSH_HOST:domains/ventoteam.com/public_html/"
