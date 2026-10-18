@@ -28,14 +28,18 @@ import { ResponsiveImage } from "./ResponsiveImage";
 
 gsap.registerPlugin(ScrollTrigger);
 
-type TeamMember = {
+type PublishedTeamMember = {
+  id: string;
+  status: "published";
   name: string;
   city: string;
   photo: string;
   photoAlt: string;
   photoPosition: string;
-  stravaUrl: string;
+  stravaUrl?: string;
 };
+
+type TeamMember = PublishedTeamMember | { id: string; status: "upcoming" };
 
 type GalleryImage = {
   src: string;
@@ -49,7 +53,7 @@ type GalleryImage = {
 type AthletePhoto = GalleryImage & {
   previewSrc: string;
   label: string;
-  people: string[];
+  memberIds: string[];
   width: number;
   height: number;
 };
@@ -82,47 +86,10 @@ type Sponsor = {
 const raceFolder = "/images/2026-04-25 mtb pomerania";
 const athleteGalleryFolder = "/images/riders-gallery";
 
-const athletePhotos: AthletePhoto[] = [
-  { file: "1-Igor", width: 1600, height: 1066 },
-  { file: "2-Zuzia", width: 2048, height: 1365 },
-  { file: "3-Wiktor", width: 1600, height: 1066 },
-  { file: "4-Cezary", width: 1600, height: 1066 },
-  { file: "5-Igor", width: 1600, height: 1064 },
-  { file: "6-Igor", width: 1600, height: 1066 },
-  { file: "7-Zuzia", width: 4831, height: 3221 },
-  { file: "8-Zuzia", width: 3712, height: 5568 },
-  { file: "9-Igor", width: 3704, height: 5556 },
-  { file: "10-Wiktor", width: 1600, height: 1066 },
-  { file: "11-Wiktor-i-Cezary", width: 1600, height: 1064 },
-  { file: "12-Cezary", width: 1066, height: 1600 },
-  { file: "13-Wiktor", width: 1600, height: 1064 },
-  { file: "14-Zuzia", width: 1600, height: 1064 },
-  { file: "15-Igor", width: 2048, height: 1365 },
-  { file: "16-Zuzia", width: 1066, height: 1600 },
-  { file: "17-Zuzia", width: 1066, height: 1600 },
-  { file: "18-Zuzia", width: 1600, height: 1066 },
-  { file: "19-Zuzia", width: 1920, height: 1280 },
-  { file: "20-Igor", width: 1600, height: 1066 },
-  { file: "21-Zuzia", width: 1365, height: 2048 },
-  { file: "22-Igor", width: 1600, height: 1064 },
-  { file: "23-Zuzia", width: 4032, height: 2268 },
-  { file: "24-Igor", width: 1600, height: 1066 },
-  { file: "25-Zuzia", width: 1080, height: 720 },
-].map(({ file, width, height }) => {
-  const people = file.replace(/^\d+-/, "").split("-i-");
-  return {
-  src: `${athleteGalleryFolder}/full/${file}.webp`,
-  previewSrc: `${athleteGalleryFolder}/thumb/${file}.webp`,
-  alt: `${people.join(" i ")} podczas zawodów MTB`,
-  label: people.join(" · "),
-  people,
-  width,
-  height,
-  };
-});
-
 const teamMembers: TeamMember[] = [
   {
+    id: "igor",
+    status: "published",
     name: "Igor",
     city: "Kwidzyn",
     photo: `${raceFolder}/Z6G_1098-Igor-1.jpg`,
@@ -131,6 +98,8 @@ const teamMembers: TeamMember[] = [
     stravaUrl: "https://www.strava.com/athletes/igor_jozefowicz",
   },
   {
+    id: "wiktor",
+    status: "published",
     name: "Wiktor",
     city: "Kwidzyn",
     photo: `${raceFolder}/Z6G_1305-Wiktor.jpg`,
@@ -139,6 +108,8 @@ const teamMembers: TeamMember[] = [
     stravaUrl: "https://www.strava.com/athletes/94078454",
   },
   {
+    id: "cezary",
+    status: "published",
     name: "Cezary",
     city: "Susz",
     photo: `${raceFolder}/Z6G_1323-Cezary.jpg`,
@@ -147,6 +118,8 @@ const teamMembers: TeamMember[] = [
     stravaUrl: "https://www.strava.com/athletes/174499201",
   },
   {
+    id: "zuzia",
+    status: "published",
     name: "Zuzia",
     city: "Józefów",
     photo: `${raceFolder}/Z6G_1332-Zuzia-1.jpg`,
@@ -154,7 +127,54 @@ const teamMembers: TeamMember[] = [
     photoPosition: "50% 44%",
     stravaUrl: "https://www.strava.com/athletes/125127027",
   },
+  { id: "member-05", status: "upcoming" },
+  { id: "member-06", status: "upcoming" },
+  { id: "member-07", status: "upcoming" },
+  { id: "member-08", status: "upcoming" },
 ];
+
+const publishedTeamMembers = teamMembers.filter(
+  (member): member is PublishedTeamMember => member.status === "published",
+);
+
+const athletePhotos: AthletePhoto[] = [
+  { file: "1-Igor", memberIds: ["igor"], width: 1600, height: 1066 },
+  { file: "2-Zuzia", memberIds: ["zuzia"], width: 2048, height: 1365 },
+  { file: "3-Wiktor", memberIds: ["wiktor"], width: 1600, height: 1066 },
+  { file: "4-Cezary", memberIds: ["cezary"], width: 1600, height: 1066 },
+  { file: "5-Igor", memberIds: ["igor"], width: 1600, height: 1064 },
+  { file: "6-Igor", memberIds: ["igor"], width: 1600, height: 1066 },
+  { file: "7-Zuzia", memberIds: ["zuzia"], width: 4831, height: 3221 },
+  { file: "8-Zuzia", memberIds: ["zuzia"], width: 3712, height: 5568 },
+  { file: "9-Igor", memberIds: ["igor"], width: 3704, height: 5556 },
+  { file: "10-Wiktor", memberIds: ["wiktor"], width: 1600, height: 1066 },
+  { file: "11-Wiktor-i-Cezary", memberIds: ["wiktor", "cezary"], width: 1600, height: 1064 },
+  { file: "12-Cezary", memberIds: ["cezary"], width: 1066, height: 1600 },
+  { file: "13-Wiktor", memberIds: ["wiktor"], width: 1600, height: 1064 },
+  { file: "14-Zuzia", memberIds: ["zuzia"], width: 1600, height: 1064 },
+  { file: "15-Igor", memberIds: ["igor"], width: 2048, height: 1365 },
+  { file: "16-Zuzia", memberIds: ["zuzia"], width: 1066, height: 1600 },
+  { file: "17-Zuzia", memberIds: ["zuzia"], width: 1066, height: 1600 },
+  { file: "18-Zuzia", memberIds: ["zuzia"], width: 1600, height: 1066 },
+  { file: "19-Zuzia", memberIds: ["zuzia"], width: 1920, height: 1280 },
+  { file: "20-Igor", memberIds: ["igor"], width: 1600, height: 1066 },
+  { file: "21-Zuzia", memberIds: ["zuzia"], width: 1365, height: 2048 },
+  { file: "22-Igor", memberIds: ["igor"], width: 1600, height: 1064 },
+  { file: "23-Zuzia", memberIds: ["zuzia"], width: 4032, height: 2268 },
+  { file: "24-Igor", memberIds: ["igor"], width: 1600, height: 1066 },
+  { file: "25-Zuzia", memberIds: ["zuzia"], width: 1080, height: 720 },
+].map(({ file, memberIds, width, height }) => {
+  const names = memberIds.map((id) => publishedTeamMembers.find((member) => member.id === id)!.name);
+  return {
+    src: `${athleteGalleryFolder}/full/${file}.webp`,
+    previewSrc: `${athleteGalleryFolder}/thumb/${file}.webp`,
+    alt: `${names.join(" i ")} podczas zawodów MTB`,
+    label: names.join(" · "),
+    memberIds,
+    width,
+    height,
+  };
+});
 
 const raceGalleries: RaceGallery[] = [
   {
@@ -255,6 +275,7 @@ export function App() {
   const [isHeaderHidden, setIsHeaderHidden] = useState(false);
   const [activeSection, setActiveSection] = useState("top");
   const [selectedRaceId, setSelectedRaceId] = useState(raceGalleries[0].id);
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [lightboxCollection, setLightboxCollection] = useState<LightboxCollection | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [lightboxZoom, setLightboxZoom] = useState(1);
@@ -271,7 +292,13 @@ export function App() {
     () => activeRace.images.filter((image) => !image.hidden),
     [activeRace],
   );
-  const activeLightboxImages = lightboxCollection === "athletes" ? athletePhotos : visibleGalleryImages;
+  const visibleAthletePhotos = useMemo(
+    () => selectedMemberId === null
+      ? athletePhotos
+      : athletePhotos.filter((photo) => photo.memberIds.includes(selectedMemberId)),
+    [selectedMemberId],
+  );
+  const activeLightboxImages = lightboxCollection === "athletes" ? visibleAthletePhotos : visibleGalleryImages;
   const activeGalleryImage = lightboxIndex === null ? null : activeLightboxImages[lightboxIndex];
   const isLightboxImageLoaded = activeGalleryImage ? loadedLightboxSrc === activeGalleryImage.src : false;
   const hasDistinctLightboxPreview = Boolean(
@@ -615,7 +642,7 @@ export function App() {
 
         const columnWidth = (containerWidth - gap * (columnCount - 1)) / columnCount;
         const columnHeights = Array<number>(columnCount).fill(0);
-        const positions = athletePhotos.map((photo, index) => {
+        const positions = visibleAthletePhotos.map((photo, index) => {
           const column = index < columnCount
             ? index
             : columnHeights.indexOf(Math.min(...columnHeights));
@@ -631,7 +658,7 @@ export function App() {
         });
 
         setAthleteMasonryPositions(positions);
-        setAthleteMasonryHeight(Math.max(...columnHeights) - gap);
+        setAthleteMasonryHeight(Math.max(0, Math.max(...columnHeights) - gap));
       });
     };
 
@@ -645,7 +672,11 @@ export function App() {
       window.removeEventListener("resize", updateMasonry);
       window.cancelAnimationFrame(animationFrame);
     };
-  }, []);
+  }, [visibleAthletePhotos]);
+
+  useEffect(() => {
+    ScrollTrigger.refresh();
+  }, [athleteMasonryHeight]);
 
   useEffect(() => {
     const shell = shellRef.current;
@@ -858,32 +889,47 @@ export function App() {
 
           <div className="roster-grid page-grid" data-stagger>
             {teamMembers.map((member, index) => (
-              <article className={`rider-card rider-card-${index + 1}`} key={member.name}>
-                <div className="rider-photo parallax-media">
-                  <ResponsiveImage
-                    src={member.photo}
-                    // Landscape originals cover tall portrait cards; size by rendered height.
-                    sizes="(max-width: 440px) 265vw, (max-width: 760px) 1160px, 1220px"
-                    alt={member.photoAlt}
-                    loading="lazy"
-                    decoding="async"
-                    style={{ objectPosition: member.photoPosition }}
-                  />
-                </div>
-                <div className="rider-shade" aria-hidden="true" />
-                <div className="rider-topline"><span>0{index + 1}</span></div>
+              <article
+                className={`rider-card${member.status === "upcoming" ? " rider-card-upcoming" : ""}`}
+                key={member.id}
+              >
+                {member.status === "published" ? (
+                  <>
+                    <div className="rider-photo parallax-media">
+                      <ResponsiveImage
+                        src={member.photo}
+                        // Account for landscape photos covering portrait cards and parallax overscan.
+                        sizes="(max-width: 440px) 235vw, (max-width: 1100px) 116vw, (max-width: 1565px) 58vw, 900px"
+                        alt={member.photoAlt}
+                        loading="lazy"
+                        decoding="async"
+                        style={{ objectPosition: member.photoPosition }}
+                      />
+                    </div>
+                    <div className="rider-shade" aria-hidden="true" />
+                  </>
+                ) : null}
+                <div className="rider-topline"><span>{String(index + 1).padStart(2, "0")}</span></div>
                 <div className="rider-content">
-                  <p className="rider-city">{member.city}</p>
-                  <h3>{member.name}</h3>
-                  <a
-                    className="strava-link"
-                    href={member.stravaUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label={`Profil Strava: ${member.name}`}
-                  >
-                    <FaStrava aria-hidden="true" /><span>Strava</span><ExternalLink size={15} aria-hidden="true" />
-                  </a>
+                  {member.status === "published" ? (
+                    <>
+                      <p className="rider-city">{member.city}</p>
+                      <h3>{member.name}</h3>
+                      {member.stravaUrl ? (
+                        <a
+                          className="strava-link"
+                          href={member.stravaUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label={`Profil Strava: ${member.name}`}
+                        >
+                          <FaStrava aria-hidden="true" /><span>Strava</span><ExternalLink size={15} aria-hidden="true" />
+                        </a>
+                      ) : null}
+                    </>
+                  ) : (
+                    <h3>Wkrótce<br />w ekipie</h3>
+                  )}
                 </div>
               </article>
             ))}
@@ -895,14 +941,37 @@ export function App() {
             <p>Starty, treningi i emocje zapisane w kadrach.</p>
           </div>
 
+          <div className="athlete-filters page-grid" role="group" aria-label="Filtruj zdjęcia zawodników">
+            <button
+              type="button"
+              aria-pressed={selectedMemberId === null}
+              aria-controls="athlete-gallery"
+              onClick={() => setSelectedMemberId(null)}
+            >Wszyscy</button>
+            {publishedTeamMembers.map((member) => (
+              <button
+                type="button"
+                aria-pressed={selectedMemberId === member.id}
+                aria-controls="athlete-gallery"
+                onClick={() => setSelectedMemberId(member.id)}
+                key={member.id}
+              >{member.name}</button>
+            ))}
+          </div>
+          <p className="athlete-gallery-status page-grid" role="status">
+            {visibleAthletePhotos.length === 0
+              ? "Zdjęcia tego zawodnika pojawią się wkrótce"
+              : `Zdjęcia: ${visibleAthletePhotos.length}`}
+          </p>
           <div
             className="athlete-mosaic page-grid"
+            id="athlete-gallery"
             data-reveal
             aria-label="Zdjęcia zawodników Vento Team"
             ref={athleteMosaicRef}
-            style={{ height: athleteMasonryHeight || undefined }}
+            style={{ height: athleteMasonryHeight }}
           >
-            {athletePhotos.map((photo, index) => (
+            {visibleAthletePhotos.map((photo, index) => (
               <button
                 className="athlete-photo"
                 type="button"

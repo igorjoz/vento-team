@@ -660,7 +660,9 @@ p {
 
 .rider-card {
   position: relative;
-  min-height: clamp(32rem, 43vw, 42rem);
+  aspect-ratio: 3 / 4;
+  min-width: 0;
+  container-type: inline-size;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -698,7 +700,7 @@ p {
 .rider-topline {
   display: flex;
   justify-content: flex-end;
-  padding: 1.1rem;
+  padding: clamp(0.8rem, 6cqw, 1.1rem);
   color: rgba(245, 243, 236, 0.55);
   font-family: var(--display);
   font-size: 0.72rem;
@@ -710,7 +712,7 @@ p {
 .rider-content {
   position: absolute;
   inset: auto 0 0;
-  padding: clamp(1rem, 2vw, 1.5rem);
+  padding: clamp(0.8rem, 6cqw, 1.5rem);
 }
 
 .rider-city {
@@ -726,11 +728,25 @@ p {
 .rider-content h3 {
   margin-bottom: 0.8rem;
   font-family: var(--display);
-  font-size: clamp(3.2rem, 4.5vw, 5rem);
+  font-size: clamp(2rem, 22cqw, 5rem);
   font-weight: 900;
   letter-spacing: -0.035em;
   line-height: 0.78;
   text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.rider-card-upcoming {
+  background:
+    linear-gradient(145deg, rgba(228, 0, 43, 0.12), transparent 60%),
+    var(--panel);
+}
+
+.rider-card-upcoming .rider-content h3 {
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: clamp(1.6rem, 17cqw, 3.8rem);
+  line-height: 0.95;
 }
 
 .strava-link {
@@ -759,7 +775,7 @@ p {
   margin-right: auto;
 }
 
-.rider-card:hover {
+.rider-card:not(.rider-card-upcoming):hover {
   z-index: 2;
   border-color: rgba(252, 227, 0, 0.55);
   box-shadow: 0 2rem 5rem rgba(0, 0, 0, 0.42);
@@ -817,6 +833,40 @@ p {
 .athlete-mosaic {
   position: relative;
   column-gap: clamp(0.65rem, 1.15vw, 1rem);
+}
+
+.athlete-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.athlete-filters button {
+  min-height: 2.75rem;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 180ms ease, background 180ms ease, color 180ms ease;
+}
+
+.athlete-filters button:hover {
+  border-color: var(--yellow);
+}
+
+.athlete-filters button[aria-pressed="true"] {
+  border-color: var(--yellow);
+  background: var(--yellow);
+  color: var(--ink);
+}
+
+.athlete-gallery-status {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  color: var(--muted);
+  font-size: 0.85rem;
 }
 
 .athlete-photo {
@@ -1819,8 +1869,6 @@ p {
   .section-heading-copy { grid-column: 3 / 9; }
   .section-lead { grid-column: 9 / 13; }
   .roster-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .rider-card { min-height: 42rem; }
-  .rider-content h3 { font-size: 5rem; }
   .footer-copy { grid-column: 3 / 13; }
   .footer-description { grid-column: 3 / 8; }
   .contact-actions { grid-column: 8 / 13; }
@@ -1948,9 +1996,6 @@ p {
   .site-footer h2 { font-size: clamp(3.3rem, 14vw, 5.8rem); }
   .section-lead { max-width: 32rem; }
 
-  .roster-grid { grid-template-columns: 1fr; }
-  .rider-card { min-height: min(146vw, 40rem); margin-top: 0; }
-  .rider-content h3 { font-size: clamp(4rem, 18vw, 6rem); }
   .athlete-gallery-heading { grid-template-columns: 1fr; }
   .athlete-gallery-heading h3,
   .athlete-gallery-heading > p:last-child { grid-column: 1; }
@@ -1998,6 +2043,7 @@ p {
 }
 
 @media (max-width: 440px) {
+  .roster-grid { grid-template-columns: 1fr; }
   .brand-name { display: none; }
   .hero-kicker { font-size: 0.78rem; }
   .hero-actions { display: grid; grid-template-columns: 1fr; }

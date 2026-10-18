@@ -1,10 +1,108 @@
 import assert from 'node:assert/strict';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { chromium } from 'playwright-core';
 
 const baseURL = process.env.BASE_URL || 'http://127.0.0.1:8080';
 const output = process.env.REPORT_DIR || '/tmp/vento-verification/after';
 const baseline = process.env.BASELINE === '1';
+
+async function verifyAthleteFilters(page) {
+  const filters = page.getByRole('group', { name: 'Filtruj zdjęcia zawodników' });
+  const photos = page.locator('.athlete-photo');
+  const everyone = filters.getByRole('button', { name: 'Wszyscy', exact: true });
+  assert.deepEqual(await filters.getByRole('button').allTextContents(), ['Wszyscy', 'Igor', 'Wiktor', 'Cezary', 'Zuzia']);
+  assert.equal(await everyone.getAttribute('aria-pressed'), 'true');
+  assert.equal(await photos.count(), 25);
+  const manifest = JSON.parse(await readFile(new URL('../src/generated/images.json', import.meta.url), 'utf8'));
+  const originals = new Map(Object.entries(manifest).map(([source, image]) => [image.webp.at(-1).src, source]));
+  const originalOrder = await photos.locator('img').evaluateAll(images => images.map(image => image.getAttribute('src')));
+
+  for (const [name, count] of [['Igor', 8], ['Wiktor', 4], ['Cezary', 3], ['Zuzia', 11]]) {
+    const filter = filters.getByRole('button', { name, exact: true });
+    await filter.focus();
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(count => document.querySelectorAll('.athlete-photo').length === count, count);
+    assert.equal(await filter.getAttribute('aria-pressed'), 'true');
+    assert.equal(await filters.locator('[aria-pressed="true"]').count(), 1);
+    const labels = await photos.locator('.athlete-photo-label').allTextContents();
+    assert.ok(labels.every(label => label.split(' · ').includes(name)));
+    const sources = await photos.locator('img').evaluateAll(images => images.map(image => image.getAttribute('src')));
+    assert.deepEqual(sources, originalOrder.filter(source => sources.includes(source)), 'Filtering preserves photo order');
+    assert.equal(labels.includes('Wiktor · Cezary'), name === 'Wiktor' || name === 'Cezary');
+    await assertMosaicLayout(page);
+
+    const alts = await photos.locator('img').evaluateAll(images => images.map(image => image.alt));
+    const thumbnail = photos.first();
+    await thumbnail.click();
+    await page.getByRole('dialog').waitFor();
+    const assertImage = async index => {
+      await page.waitForFunction(alt => document.querySelector('.lightbox-full')?.alt === alt, alts[index]);
+      assert.equal(await page.locator('.lightbox-toolbar small').innerText(), `${String(index + 1).padStart(2, '0')} / ${String(count).padStart(2, '0')}`);
+      assert.equal(await page.locator('.lightbox-full').getAttribute('src'), originals.get(sources[index]), 'Lightbox photo matches the filtered thumbnail');
+    };
+    await assertImage(0);
+    await page.keyboard.press('ArrowLeft');
+    await assertImage(count - 1);
+    await page.getByRole('button', { name: 'Następne zdjęcie', exact: true }).click();
+    await assertImage(0);
+    await page.keyboard.press('ArrowRight');
+    await assertImage(1);
+    await page.keyboard.press('Escape');
+    await page.getByRole('dialog').waitFor({ state: 'detached' });
+    await page.waitForFunction(() => document.activeElement?.classList.contains('athlete-photo'));
+    assert.equal(await thumbnail.evaluate(element => document.activeElement === element), true);
+  }
+  await everyone.click();
+  await page.waitForFunction(() => document.querySelectorAll('.athlete-photo').length === 25);
+  assert.deepEqual(await photos.locator('img').evaluateAll(images => images.map(image => image.getAttribute('src'))), originalOrder);
+  await assertMosaicLayout(page);
+}
+
+async function assertMosaicLayout(page) {
+  await page.waitForFunction(() => {
+    const mosaic = document.querySelector('.athlete-mosaic');
+    const items = [...mosaic.querySelectorAll('.athlete-photo')];
+    const boxes = items.map(item => ({ x: item.offsetLeft, y: item.offsetTop, width: item.offsetWidth, height: item.offsetHeight }));
+    const contained = boxes.every(box => box.x >= 0 && box.y >= 0 && box.x + box.width <= mosaic.clientWidth + 1 && box.y + box.height <= mosaic.clientHeight + 1);
+    const noOverlap = boxes.every((box, i) => boxes.slice(i + 1).every(other =>
+      box.x + box.width <= other.x + 1 || other.x + other.width <= box.x + 1 ||
+      box.y + box.height <= other.y + 1 || other.y + other.height <= box.y + 1));
+    const bottom = Math.max(0, ...boxes.map(box => box.y + box.height));
+    return contained && noOverlap && Math.abs(bottom - mosaic.clientHeight) <= 2;
+  });
+}
+
+async function verifyRosterLayout(page, output) {
+  for (const width of [375, 440, 441, 768, 1024, 1100, 1101, 1440]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await assertMosaicLayout(page);
+    const cards = page.locator('.rider-card');
+    assert.equal(await cards.count(), 8);
+    assert.deepEqual(await cards.locator('.rider-topline').allTextContents(), ['01', '02', '03', '04', '05', '06', '07', '08']);
+    assert.deepEqual(await page.locator('.rider-card:not(.rider-card-upcoming) h3').allTextContents(), ['Igor', 'Wiktor', 'Cezary', 'Zuzia']);
+    assert.equal(await page.locator('.rider-card-upcoming').count(), 4);
+    assert.equal(await page.locator('.rider-card-upcoming a, .rider-card-upcoming button, .rider-card-upcoming img').count(), 0);
+    assert.equal(await page.locator('.roster-grid').evaluate(grid => getComputedStyle(grid).gridTemplateColumns.split(' ').length), width > 1100 ? 4 : width > 440 ? 2 : 1);
+    const validCards = await cards.evaluateAll(cards => cards.every(card => {
+      const { width, height } = card.getBoundingClientRect();
+      const content = card.querySelector('.rider-content');
+      const heading = content.querySelector('h3');
+      return Math.abs(width / height - 3 / 4) < 0.01 && content.scrollWidth <= content.clientWidth &&
+        heading.scrollWidth <= heading.clientWidth && content.offsetTop >= card.querySelector('.rider-topline').offsetHeight;
+    }));
+    assert.equal(validCards, true, `${width}px: cards keep their proportions and fit their content`);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `${width}px: no horizontal overflow`);
+    if ([375, 768, 1024, 1440].includes(width)) {
+      await page.mouse.move(0, 0);
+      await page.locator('.rider-photo img').evaluateAll(async images => {
+        images.forEach(image => { image.loading = 'eager'; });
+        await Promise.all(images.map(image => image.decode()));
+      });
+      await page.locator('.roster-grid').screenshot({ path: `${output}/roster-${width}.png`, style: '.site-header { visibility: hidden !important; }' });
+    }
+  }
+}
+
 await mkdir(output, { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || '/usr/bin/google-chrome', args: ['--no-sandbox', '--disable-dev-shm-usage'] });
 const results = [];
@@ -66,6 +164,7 @@ try {
       await page.waitForTimeout(100);
       assert.equal(await page.locator('.site-shell').evaluate(el => el.style.getPropertyValue('--pointer-x')), '250px');
     }
+    if (!baseline) await verifyAthleteFilters(page);
     const thumbnail = page.locator('.athlete-photo').first();
     await cdp.send('Profiler.start');
     await thumbnail.click();
@@ -156,6 +255,11 @@ try {
   assert.equal(await page.locator('.pointer-glow').evaluate(el => getComputedStyle(el).display), 'none');
   assert.equal(await page.locator('.hero-media').evaluate(el => getComputedStyle(el).transform), 'none');
   await page.screenshot({ path: `${output}/mobile-reduced-motion.png` });
+  if (!baseline) {
+    await verifyAthleteFilters(page);
+    assert.ok(await page.locator('.athlete-photo').first().evaluate(element => parseFloat(getComputedStyle(element).transitionDuration) < 0.001));
+    await verifyRosterLayout(page, output);
+  }
   await reduced.close();
   await writeFile(`${output}/browser.json`, JSON.stringify(results, null, 2));
   console.log(JSON.stringify(results.map(({ name, imageBytes, errors, violations }) => ({ name, imageBytes, errors, violations })), null, 2));
