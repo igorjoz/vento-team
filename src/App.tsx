@@ -6,7 +6,6 @@ import {
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent,
-  type WheelEvent,
 } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -25,6 +24,7 @@ import {
   X,
 } from "lucide-react";
 import { FaFacebookF, FaInstagram, FaStrava, FaYoutube } from "react-icons/fa";
+import { ResponsiveImage } from "./ResponsiveImage";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -239,6 +239,12 @@ export function App() {
   const lightboxContentRef = useRef<HTMLDivElement>(null);
   const lightboxStageRef = useRef<HTMLDivElement>(null);
   const lightboxImageRef = useRef<HTMLImageElement>(null);
+  const lightboxPreviewRef = useRef<HTMLImageElement>(null);
+  const lightboxView = useRef({ zoom: 1, pan: { x: 0, y: 0 } });
+  const lightboxGeometry = useRef({ width: 0, height: 0, renderedWidth: 0, renderedHeight: 0 });
+  const panFrame = useRef(0);
+  const pendingPan = useRef<{ x: number; y: number } | null>(null);
+  const draggingLightbox = useRef(false);
   const lightboxCloseRef = useRef<HTMLButtonElement>(null);
   const athleteMosaicRef = useRef<HTMLDivElement>(null);
   const lightboxReturnFocus = useRef<HTMLElement | null>(null);
@@ -252,7 +258,6 @@ export function App() {
   const [lightboxCollection, setLightboxCollection] = useState<LightboxCollection | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [lightboxZoom, setLightboxZoom] = useState(1);
-  const [lightboxPan, setLightboxPan] = useState({ x: 0, y: 0 });
   const [isDraggingLightbox, setIsDraggingLightbox] = useState(false);
   const [loadedLightboxSrc, setLoadedLightboxSrc] = useState<string | null>(null);
   const [athleteMasonryPositions, setAthleteMasonryPositions] = useState<MasonryPosition[]>([]);
@@ -273,9 +278,21 @@ export function App() {
     activeGalleryImage?.previewSrc && activeGalleryImage.previewSrc !== activeGalleryImage.src,
   );
 
+  const applyLightboxTransform = () => {
+    const { zoom, pan } = lightboxView.current;
+    const transform = `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${zoom})`;
+    if (lightboxImageRef.current) lightboxImageRef.current.style.transform = transform;
+    if (lightboxPreviewRef.current) lightboxPreviewRef.current.style.transform = transform;
+  };
+
   const resetLightboxView = () => {
+    window.cancelAnimationFrame(panFrame.current);
+    panFrame.current = 0;
+    pendingPan.current = null;
+    draggingLightbox.current = false;
+    lightboxView.current = { zoom: 1, pan: { x: 0, y: 0 } };
+    applyLightboxTransform();
     setLightboxZoom(1);
-    setLightboxPan({ x: 0, y: 0 });
     setIsDraggingLightbox(false);
   };
 
@@ -332,32 +349,23 @@ export function App() {
     window.requestAnimationFrame(() => tabs?.[nextIndex]?.focus());
   };
 
-  const constrainPan = (x: number, y: number, zoom = lightboxZoom) => {
-    const stage = lightboxStageRef.current;
-    const image = lightboxImageRef.current;
-    if (!stage || !image || zoom <= 1 || !image.naturalWidth || !image.naturalHeight) return { x: 0, y: 0 };
-
-    const viewportWidth = image.clientWidth;
-    const viewportHeight = image.clientHeight;
-    const fitScale = Math.min(viewportWidth / image.naturalWidth, viewportHeight / image.naturalHeight);
-    const renderedWidth = image.naturalWidth * fitScale;
-    const renderedHeight = image.naturalHeight * fitScale;
-    const maxX = Math.max(0, (renderedWidth * zoom - viewportWidth) / 2);
-    const maxY = Math.max(0, (renderedHeight * zoom - viewportHeight) / 2);
+  const constrainPan = (x: number, y: number, zoom = lightboxView.current.zoom) => {
+    const { width, height, renderedWidth, renderedHeight } = lightboxGeometry.current;
+    if (zoom <= 1 || !renderedWidth || !renderedHeight) return { x: 0, y: 0 };
+    const maxX = Math.max(0, (renderedWidth * zoom - width) / 2);
+    const maxY = Math.max(0, (renderedHeight * zoom - height) / 2);
     return { x: clamp(x, -maxX, maxX), y: clamp(y, -maxY, maxY) };
   };
 
   const zoomLightbox = (amount: number) => {
-    setLightboxZoom((currentZoom) => {
-      const nextZoom = clamp(Number((currentZoom + amount).toFixed(2)), 1, 3);
-      setLightboxPan((currentPan) => constrainPan(currentPan.x, currentPan.y, nextZoom));
-      return nextZoom;
-    });
-  };
-
-  const handleLightboxWheel = (event: WheelEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    zoomLightbox(event.deltaY < 0 ? 0.25 : -0.25);
+    window.cancelAnimationFrame(panFrame.current);
+    panFrame.current = 0;
+    pendingPan.current = null;
+    const { zoom, pan } = lightboxView.current;
+    const nextZoom = clamp(Number((zoom + amount).toFixed(2)), 1, 3);
+    lightboxView.current = { zoom: nextZoom, pan: constrainPan(pan.x, pan.y, nextZoom) };
+    applyLightboxTransform();
+    setLightboxZoom(nextZoom);
   };
 
   const handleLightboxPointerDown = (event: PointerEvent<HTMLDivElement>) => {
@@ -365,32 +373,79 @@ export function App() {
     dragStart.current = {
       pointerX: event.clientX,
       pointerY: event.clientY,
-      panX: lightboxPan.x,
-      panY: lightboxPan.y,
+      panX: lightboxView.current.pan.x,
+      panY: lightboxView.current.pan.y,
     };
-    if (lightboxZoom > 1) setIsDraggingLightbox(true);
+    draggingLightbox.current = lightboxView.current.zoom > 1;
+    setIsDraggingLightbox(draggingLightbox.current);
   };
 
   const handleLightboxPointerMove = (event: PointerEvent<HTMLDivElement>) => {
-    if (!isDraggingLightbox || lightboxZoom <= 1) return;
-    setLightboxPan(
-      constrainPan(
-        dragStart.current.panX + event.clientX - dragStart.current.pointerX,
-        dragStart.current.panY + event.clientY - dragStart.current.pointerY,
-      ),
-    );
+    if (!draggingLightbox.current) return;
+    pendingPan.current = {
+      x: dragStart.current.panX + event.clientX - dragStart.current.pointerX,
+      y: dragStart.current.panY + event.clientY - dragStart.current.pointerY,
+    };
+    if (panFrame.current) return;
+    panFrame.current = window.requestAnimationFrame(() => {
+      panFrame.current = 0;
+      if (!pendingPan.current) return;
+      lightboxView.current.pan = constrainPan(pendingPan.current.x, pendingPan.current.y);
+      pendingPan.current = null;
+      applyLightboxTransform();
+    });
   };
 
   const stopLightboxDrag = (event: PointerEvent<HTMLDivElement>) => {
+    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
+    window.cancelAnimationFrame(panFrame.current);
+    panFrame.current = 0;
+    if (pendingPan.current) {
+      lightboxView.current.pan = constrainPan(pendingPan.current.x, pendingPan.current.y);
+      pendingPan.current = null;
+      applyLightboxTransform();
+    }
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
-    if (lightboxZoom === 1) {
+    if (lightboxView.current.zoom === 1 && event.type !== "pointercancel") {
       const swipeDistance = event.clientX - dragStart.current.pointerX;
       if (Math.abs(swipeDistance) > 56) showGalleryImage(swipeDistance < 0 ? 1 : -1);
     }
+    draggingLightbox.current = false;
     setIsDraggingLightbox(false);
   };
+
+  useLayoutEffect(() => {
+    const stage = lightboxStageRef.current;
+    const image = lightboxImageRef.current;
+    if (!stage || !image) return;
+    const measure = () => {
+      // Read all geometry before writing transforms. Pointer moves only read this cache.
+      const width = image.clientWidth;
+      const height = image.clientHeight;
+      const fit = image.naturalWidth && image.naturalHeight
+        ? Math.min(width / image.naturalWidth, height / image.naturalHeight) : 0;
+      lightboxGeometry.current = { width, height, renderedWidth: image.naturalWidth * fit, renderedHeight: image.naturalHeight * fit };
+      const { pan } = lightboxView.current;
+      lightboxView.current.pan = constrainPan(pan.x, pan.y);
+      applyLightboxTransform();
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(stage);
+    const wheel = (event: globalThis.WheelEvent) => {
+      event.preventDefault();
+      zoomLightbox(event.deltaY < 0 ? 0.25 : -0.25);
+    };
+    stage.addEventListener("wheel", wheel, { passive: false });
+    return () => {
+      observer.disconnect();
+      stage.removeEventListener("wheel", wheel);
+    };
+  }, [activeGalleryImage?.src, loadedLightboxSrc, lightboxZoom]);
+
+  useEffect(() => () => window.cancelAnimationFrame(panFrame.current), []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -521,12 +576,24 @@ export function App() {
     const finePointer = window.matchMedia("(pointer: fine)");
     if (!finePointer.matches) return;
 
+    let frame = 0;
+    let x = 0;
+    let y = 0;
     const handlePointer = (event: globalThis.PointerEvent) => {
-      shell.style.setProperty("--pointer-x", `${event.clientX}px`);
-      shell.style.setProperty("--pointer-y", `${event.clientY}px`);
+      x = event.clientX;
+      y = event.clientY;
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        shell.style.setProperty("--pointer-x", `${x}px`);
+        shell.style.setProperty("--pointer-y", `${y}px`);
+      });
     };
     window.addEventListener("pointermove", handlePointer, { passive: true });
-    return () => window.removeEventListener("pointermove", handlePointer);
+    return () => {
+      window.removeEventListener("pointermove", handlePointer);
+      window.cancelAnimationFrame(frame);
+    };
   }, []);
 
   useLayoutEffect(() => {
@@ -717,7 +784,10 @@ export function App() {
 
       <main>
         <section className="hero" id="top" aria-labelledby="hero-title">
-          <div className="hero-media" aria-hidden="true" />
+          <div className="hero-media" aria-hidden="true">
+            {/* Account for the pixels hidden by cover cropping on tall screens. */}
+            <ResponsiveImage src={`${raceFolder}/mtb pomerania/wspolne-zdjecie-teamowe.jpg`} sizes="max(100vw, 1280px, 180svh)" alt="" loading="eager" fetchPriority="high" />
+          </div>
           <div className="hero-overlay" aria-hidden="true" />
           <div className="route-line route-line-hero" aria-hidden="true" />
 
@@ -790,8 +860,10 @@ export function App() {
             {teamMembers.map((member, index) => (
               <article className={`rider-card rider-card-${index + 1}`} key={member.name}>
                 <div className="rider-photo parallax-media">
-                  <img
+                  <ResponsiveImage
                     src={member.photo}
+                    // Landscape originals cover tall portrait cards; size by rendered height.
+                    sizes="(max-width: 440px) 265vw, (max-width: 760px) 1160px, 1220px"
                     alt={member.photoAlt}
                     loading="lazy"
                     decoding="async"
@@ -839,11 +911,10 @@ export function App() {
                 key={photo.src}
                 style={athleteMasonryPositions[index]}
               >
-                <img
-                  src={photo.previewSrc}
+                <ResponsiveImage
+                  src={photo.src}
+                  sizes="(max-width: 760px) 46vw, (max-width: 1100px) 31vw, (max-width: 1699px) 23vw, 295px"
                   alt={photo.alt}
-                  width={photo.width}
-                  height={photo.height}
                   loading="lazy"
                   decoding="async"
                 />
@@ -910,7 +981,7 @@ export function App() {
                 aria-label={image.label ? `Otwórz zdjęcie: ${image.label}` : `Otwórz zdjęcie ${index + 1}`}
               >
                 <span className="gallery-media parallax-media">
-                  <img src={image.previewSrc ?? image.src} alt={image.alt} loading="lazy" decoding="async" />
+                  <ResponsiveImage src={image.src} sizes={image.featured ? "(max-width: 440px) 1200px, (max-width: 760px) 100vw, 1000px" : "(max-width: 440px) 92vw, (max-width: 760px) 46vw, 740px"} alt={image.alt} loading="lazy" decoding="async" />
                 </span>
                 {image.label ? <span className="gallery-caption">{image.label}</span> : null}
                 <span className="gallery-open" aria-hidden="true"><Plus size={18} /></span>
@@ -1013,7 +1084,6 @@ export function App() {
             <div
               className={`lightbox-stage${lightboxZoom > 1 ? " is-zoomed" : ""}${isDraggingLightbox ? " is-dragging" : ""}`}
               ref={lightboxStageRef}
-              onWheel={handleLightboxWheel}
               onPointerDown={handleLightboxPointerDown}
               onPointerMove={handleLightboxPointerMove}
               onPointerUp={stopLightboxDrag}
@@ -1023,11 +1093,11 @@ export function App() {
               {hasDistinctLightboxPreview ? (
                 <img
                   className="lightbox-preview"
+                  ref={lightboxPreviewRef}
                   src={activeGalleryImage.previewSrc}
                   alt=""
                   aria-hidden="true"
                   draggable="false"
-                  style={{ transform: `translate3d(${lightboxPan.x}px, ${lightboxPan.y}px, 0) scale(${lightboxZoom})` }}
                 />
               ) : null}
               <img
@@ -1038,7 +1108,6 @@ export function App() {
                 alt={activeGalleryImage.alt}
                 draggable="false"
                 onLoad={() => setLoadedLightboxSrc(activeGalleryImage.src)}
-                style={{ transform: `translate3d(${lightboxPan.x}px, ${lightboxPan.y}px, 0) scale(${lightboxZoom})` }}
               />
               {!isLightboxImageLoaded ? (
                 <div className="lightbox-loading" role="status" aria-live="polite" aria-label="Ładowanie zdjęcia">

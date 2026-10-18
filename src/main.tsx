@@ -1,20 +1,15 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import ReactDOM from "react-dom/client";
-import "@fontsource/barlow-condensed/700.css";
-import "@fontsource/barlow-condensed/800.css";
-import "@fontsource/barlow-condensed/900.css";
-import "@fontsource/manrope/400.css";
-import "@fontsource/manrope/600.css";
-import "@fontsource/manrope/700.css";
-import "@fontsource/manrope/800.css";
-import { App } from "./App";
-import { RegulationsPage } from "./RegulationsPage";
+import "./fonts.css";
 import "./styles.css";
 
 const normalizedPath = window.location.pathname.replace(/\/$/, "") || "/";
+const Page = normalizedPath === "/regulamin"
+  ? lazy(() => import("./RegulationsPage").then(module => ({ default: module.RegulationsPage })))
+  : lazy(() => import("./App").then(module => ({ default: module.App })));
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    {normalizedPath === "/regulamin" ? <RegulationsPage /> : <App />}
+    <Suspense fallback={null}><Page /></Suspense>
   </React.StrictMode>,
 );
