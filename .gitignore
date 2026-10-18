@@ -1,5 +1,7 @@
 # Dependencies
 node_modules/
+/public/images/optimized/
+/src/generated/
 
 # Build output and generated deployment bundles
 dist/

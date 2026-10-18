@@ -1,0 +1,511 @@
+{
+  "date": "2026-10-18",
+  "scope": "Local verification only; production not deployed",
+  "environment": {
+    "lighthouse": "13.5.0",
+    "browser": {
+      "networkUserAgent": "Mozilla/5.0 (Linux; Android 11; moto g power (2022)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Mobile Safari/537.36",
+      "hostUserAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.0.0 Safari/537.36",
+      "benchmarkIndex": 3214,
+      "credits": {}
+    },
+    "settings": {
+      "output": [
+        "json"
+      ],
+      "maxWaitForFcp": 30000,
+      "maxWaitForLoad": 45000,
+      "pauseAfterFcpMs": 1000,
+      "pauseAfterLoadMs": 1000,
+      "networkQuietThresholdMs": 1000,
+      "cpuQuietThresholdMs": 1000,
+      "formFactor": "mobile",
+      "throttling": {
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "requestLatencyMs": 562.5,
+        "downloadThroughputKbps": 1474.5600000000002,
+        "uploadThroughputKbps": 675,
+        "cpuSlowdownMultiplier": 4
+      },
+      "throttlingMethod": "simulate",
+      "screenEmulation": {
+        "mobile": true,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75,
+        "disabled": false
+      },
+      "emulatedUserAgent": "Mozilla/5.0 (Linux; Android 11; moto g power (2022)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36",
+      "auditMode": false,
+      "gatherMode": false,
+      "clearStorageTypes": [
+        "file_systems",
+        "shader_cache",
+        "service_workers",
+        "cache_storage"
+      ],
+      "disableStorageReset": false,
+      "debugNavigation": false,
+      "channel": "cli",
+      "usePassiveGathering": false,
+      "disableFullPageScreenshot": false,
+      "skipAboutBlank": false,
+      "blankPage": "about:blank",
+      "ignoreStatusCode": false,
+      "locale": "en-US",
+      "blockedUrlPatterns": null,
+      "additionalTraceCategories": null,
+      "extraHeaders": null,
+      "precomputedLanternData": null,
+      "onlyAudits": null,
+      "onlyCategories": [
+        "performance"
+      ],
+      "skipAudits": null
+    }
+  },
+  "dependencies": {
+    "vite": "8.3.4",
+    "nanoid": "3.3.20",
+    "source-map-js": "1.2.2",
+    "sharp": "0.35.5"
+  },
+  "npmAudit": {
+    "critical": 0,
+    "high": 0,
+    "moderate": 0,
+    "low": 0
+  },
+  "performance": {
+    "before": {
+      "url": "http://127.0.0.1:8080/",
+      "lighthouseVersion": "13.5.0",
+      "runs": [
+        {
+          "score": 57.99999999999999,
+          "lcp": 15829.748999999998,
+          "cls": 0.0026214888730487014,
+          "tbt": 323,
+          "fcp": 4054.749
+        },
+        {
+          "score": 59,
+          "lcp": 15753.964899999999,
+          "cls": 0.0026214888730487014,
+          "tbt": 280.5,
+          "fcp": 4053.9649
+        },
+        {
+          "score": 55.00000000000001,
+          "lcp": 15754.6967,
+          "cls": 0.0026214888730487014,
+          "tbt": 388.5,
+          "fcp": 4054.6967000000004
+        }
+      ],
+      "median": {
+        "score": 57.99999999999999,
+        "lcp": 15754.6967,
+        "cls": 0.0026214888730487014,
+        "tbt": 323,
+        "fcp": 4054.6967000000004
+      }
+    },
+    "after": {
+      "url": "http://127.0.0.1:8083/",
+      "lighthouseVersion": "13.5.0",
+      "runs": [
+        {
+          "score": 71,
+          "lcp": 5635.373125,
+          "cls": 0.001883253964132415,
+          "tbt": 254,
+          "fcp": 2420.3731249999996
+        },
+        {
+          "score": 70,
+          "lcp": 5634.8336,
+          "cls": 0.001883253964132415,
+          "tbt": 283.5,
+          "fcp": 2422.3336
+        },
+        {
+          "score": 69,
+          "lcp": 5633.272775,
+          "cls": 0.001883253964132415,
+          "tbt": 302.5,
+          "fcp": 2420.272775
+        }
+      ],
+      "median": {
+        "score": 70,
+        "lcp": 5634.8336,
+        "cls": 0.001883253964132415,
+        "tbt": 283.5,
+        "fcp": 2420.3731249999996
+      }
+    }
+  },
+  "images": {
+    "before": [
+      {
+        "name": "mobile",
+        "viewport": {
+          "width": 412,
+          "height": 823
+        },
+        "scrollHeight": 10329,
+        "imageBytes": 11425343,
+        "errors": [],
+        "violations": [],
+        "failedResponses": [
+          "404 http://127.0.0.1:8080/regulamin"
+        ]
+      },
+      {
+        "name": "desktop",
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "scrollHeight": 7526,
+        "imageBytes": 11425343,
+        "errors": [],
+        "violations": [],
+        "failedResponses": [
+          "404 http://127.0.0.1:8080/regulamin"
+        ]
+      }
+    ],
+    "report-only": [
+      {
+        "name": "mobile",
+        "viewport": {
+          "width": 412,
+          "height": 823
+        },
+        "scrollHeight": 10329,
+        "imageBytes": 1338116,
+        "errors": [],
+        "violations": [],
+        "failedResponses": []
+      },
+      {
+        "name": "desktop",
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "scrollHeight": 7526,
+        "imageBytes": 1855069,
+        "errors": [],
+        "violations": [],
+        "failedResponses": []
+      }
+    ],
+    "after": [
+      {
+        "name": "mobile",
+        "viewport": {
+          "width": 412,
+          "height": 823
+        },
+        "scrollHeight": 10329,
+        "imageBytes": 1338116,
+        "errors": [],
+        "violations": [],
+        "failedResponses": []
+      },
+      {
+        "name": "desktop",
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "scrollHeight": 7526,
+        "imageBytes": 1855069,
+        "errors": [],
+        "violations": [],
+        "failedResponses": []
+      }
+    ]
+  },
+  "layout": [
+    {
+      "viewport": {
+        "width": 412,
+        "height": 823
+      },
+      "before": {
+        ".hero-title": {
+          "x": 16.484375,
+          "y": 183.765625,
+          "width": 285.90625,
+          "height": 217.96875
+        },
+        ".hero-media": {
+          "x": -6.17999267578125,
+          "y": -80.14794921875,
+          "width": 424.3599853515625,
+          "height": 983.2958984375
+        },
+        ".hero-intro": {
+          "x": 16.484375,
+          "y": 422.296875,
+          "width": 379.03125,
+          "height": 188.109375
+        },
+        ".hero-partner-lockup": {
+          "x": 16.484375,
+          "y": 632.796875,
+          "width": 379.03125,
+          "height": 118.203125
+        },
+        ".site-header": {
+          "x": 16.484375,
+          "y": 10.390625,
+          "width": 379.03125,
+          "height": 62.390625
+        },
+        ".roster-grid": {
+          "x": 16.484375,
+          "y": 1241.984375,
+          "width": 379.03125,
+          "height": 2439.625
+        },
+        ".athlete-mosaic": {
+          "x": 16.484375,
+          "y": 3955.609375,
+          "width": 379.03125,
+          "height": 2141.640625
+        },
+        ".gallery-grid": {
+          "x": 16.484375,
+          "y": 6577.609375,
+          "width": 379.03125,
+          "height": 1500
+        },
+        ".sponsors-grid": {
+          "x": 16.484375,
+          "y": 8576.59375,
+          "width": 379.03125,
+          "height": 812.796875
+        },
+        ".site-footer": {
+          "x": 0,
+          "y": 9469.390625,
+          "width": 412,
+          "height": 859.296875
+        }
+      },
+      "after": {
+        ".hero-title": {
+          "x": 16.484375,
+          "y": 183.765625,
+          "width": 285.90625,
+          "height": 217.96875
+        },
+        ".hero-media": {
+          "x": -6.17999267578125,
+          "y": -80.14794921875,
+          "width": 424.3599853515625,
+          "height": 983.2958984375
+        },
+        ".hero-intro": {
+          "x": 16.484375,
+          "y": 422.296875,
+          "width": 379.03125,
+          "height": 188.109375
+        },
+        ".hero-partner-lockup": {
+          "x": 16.484375,
+          "y": 632.796875,
+          "width": 379.03125,
+          "height": 118.203125
+        },
+        ".site-header": {
+          "x": 16.484375,
+          "y": 10.390625,
+          "width": 379.03125,
+          "height": 62.390625
+        },
+        ".roster-grid": {
+          "x": 16.484375,
+          "y": 1241.984375,
+          "width": 379.03125,
+          "height": 2439.625
+        },
+        ".athlete-mosaic": {
+          "x": 16.484375,
+          "y": 3955.609375,
+          "width": 379.03125,
+          "height": 2141.640625
+        },
+        ".gallery-grid": {
+          "x": 16.484375,
+          "y": 6577.609375,
+          "width": 379.03125,
+          "height": 1500
+        },
+        ".sponsors-grid": {
+          "x": 16.484375,
+          "y": 8576.59375,
+          "width": 379.03125,
+          "height": 812.796875
+        },
+        ".site-footer": {
+          "x": 0,
+          "y": 9469.390625,
+          "width": 412,
+          "height": 859.296875
+        }
+      }
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "before": {
+        ".hero-title": {
+          "x": 43.203125,
+          "y": 303.859375,
+          "width": 409.21875,
+          "height": 319.5
+        },
+        ".hero-media": {
+          "x": -21.5999755859375,
+          "y": -97.39996337890625,
+          "width": 1483.199951171875,
+          "height": 1194.7998046875
+        },
+        ".hero-intro": {
+          "x": 43.203125,
+          "y": 648.359375,
+          "width": 624,
+          "height": 143.359375
+        },
+        ".hero-partner-lockup": {
+          "x": 983.984375,
+          "y": 460.40625,
+          "width": 412.796875,
+          "height": 139.1875
+        },
+        ".site-header": {
+          "x": 43.203125,
+          "y": 16,
+          "width": 1353.59375,
+          "height": 80
+        },
+        ".roster-grid": {
+          "x": 43.203125,
+          "y": 1437.03125,
+          "width": 1353.59375,
+          "height": 619.1875
+        },
+        ".athlete-mosaic": {
+          "x": 43.203125,
+          "y": 2398.453125,
+          "width": 1353.59375,
+          "height": 1929.921875
+        },
+        ".gallery-grid": {
+          "x": 43.203125,
+          "y": 4889.1875,
+          "width": 1353.59375,
+          "height": 688
+        },
+        ".sponsors-grid": {
+          "x": 43.203125,
+          "y": 6158.21875,
+          "width": 1353.59375,
+          "height": 460.796875
+        },
+        ".site-footer": {
+          "x": 0,
+          "y": 6763.015625,
+          "width": 1440,
+          "height": 762.921875
+        }
+      },
+      "after": {
+        ".hero-title": {
+          "x": 43.203125,
+          "y": 303.859375,
+          "width": 409.21875,
+          "height": 319.5
+        },
+        ".hero-media": {
+          "x": -21.5999755859375,
+          "y": -97.39996337890625,
+          "width": 1483.199951171875,
+          "height": 1194.7998046875
+        },
+        ".hero-intro": {
+          "x": 43.203125,
+          "y": 648.359375,
+          "width": 624,
+          "height": 143.359375
+        },
+        ".hero-partner-lockup": {
+          "x": 983.984375,
+          "y": 460.40625,
+          "width": 412.796875,
+          "height": 139.1875
+        },
+        ".site-header": {
+          "x": 43.203125,
+          "y": 16,
+          "width": 1353.59375,
+          "height": 80
+        },
+        ".roster-grid": {
+          "x": 43.203125,
+          "y": 1437.03125,
+          "width": 1353.59375,
+          "height": 619.1875
+        },
+        ".athlete-mosaic": {
+          "x": 43.203125,
+          "y": 2398.453125,
+          "width": 1353.59375,
+          "height": 1929.921875
+        },
+        ".gallery-grid": {
+          "x": 43.203125,
+          "y": 4889.1875,
+          "width": 1353.59375,
+          "height": 688
+        },
+        ".sponsors-grid": {
+          "x": 43.203125,
+          "y": 6158.21875,
+          "width": 1353.59375,
+          "height": 460.796875
+        },
+        ".site-footer": {
+          "x": 0,
+          "y": 6763.015625,
+          "width": 1440,
+          "height": 762.921875
+        }
+      }
+    }
+  ],
+  "checks": {
+    "build": "passed",
+    "dockerBuild": "passed",
+    "imageVariantsAndReproducibility": "passed",
+    "deployOrderAndFailureProtection": "passed",
+    "nginxReportOnly": "passed",
+    "nginxEnforcedCSP": "passed",
+    "apacheHTTP": "passed",
+    "nginxTLSHSTS": "passed",
+    "apacheTLSHSTS": "passed",
+    "imageReductionAtLeast50Percent": "passed",
+    "lowerMedianLCP": "passed",
+    "CLSBelow0_1AllRuns": "passed"
+  },
+  "artifacts": "/tmp/vento-verification"
+}
